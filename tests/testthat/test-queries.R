@@ -35,28 +35,47 @@ test_that("filter_by_submitter creates correct query", {
 
 # Test Species Queries ----
 
-test_that("filter_by_species with genus only", {
+test_that("filter_by_species with genus only searches taxonomy and genus", {
   query <- filter_by_species("Megaptera")
-  expect_equal(query, list(term = list(genus = "Megaptera")))
+  expect_true("bool" %in% names(query))
+  expect_true("should" %in% names(query$bool))
+  expect_equal(query$bool$minimum_should_match, 1)
+  expect_equal(length(query$bool$should), 2)
+
+  # Should contain a wildcard on taxonomy and a term on genus
+  has_taxonomy <- any(sapply(query$bool$should, function(x) {
+    !is.null(x$wildcard$taxonomy$value) &&
+      x$wildcard$taxonomy$value == "Megaptera *"
+  }))
+  expect_true(has_taxonomy)
+
+  has_genus <- any(sapply(query$bool$should, function(x) {
+    identical(x, list(term = list(genus = "Megaptera")))
+  }))
+  expect_true(has_genus)
 })
 
-test_that("filter_by_species with genus and epithet", {
+test_that("filter_by_species with genus and epithet searches taxonomy and separate fields", {
   query <- filter_by_species("Megaptera", "novaeangliae")
   expect_true("bool" %in% names(query))
-  expect_true("must" %in% names(query$bool))
-  expect_equal(length(query$bool$must), 2)
+  expect_true("should" %in% names(query$bool))
+  expect_equal(query$bool$minimum_should_match, 1)
+  expect_equal(length(query$bool$should), 2)
 
-  # Check that the required terms are in the must list
-  genus_term <- list(term = list(genus = "Megaptera"))
-  epithet_term <- list(term = list(specificEpithet = "novaeangliae"))
+  # Should contain a terms query on taxonomy with the concatenated string
+  has_taxonomy <- any(sapply(query$bool$should, function(x) {
+    identical(x, list(terms = list(taxonomy = list("Megaptera novaeangliae"))))
+  }))
+  expect_true(has_taxonomy)
 
-  # Check if genus term exists in must list
-  has_genus <- any(sapply(query$bool$must, function(x) identical(x, genus_term)))
-  expect_true(has_genus)
-
-  # Check if epithet term exists in must list
-  has_epithet <- any(sapply(query$bool$must, function(x) identical(x, epithet_term)))
-  expect_true(has_epithet)
+  # Should contain a bool/must with genus and specificEpithet terms
+  has_separate <- any(sapply(query$bool$should, function(x) {
+    !is.null(x$bool$must) &&
+      length(x$bool$must) == 2 &&
+      any(sapply(x$bool$must, function(t) identical(t, list(term = list(genus = "Megaptera"))))) &&
+      any(sapply(x$bool$must, function(t) identical(t, list(term = list(specificEpithet = "novaeangliae")))))
+  }))
+  expect_true(has_separate)
 })
 
 # Test Year Range Queries ----

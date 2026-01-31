@@ -56,6 +56,10 @@ Search for encounters using OpenSearch/Elasticsearch query syntax.}
 Search for individuals using OpenSearch/Elasticsearch query syntax.}
 
 \item{\code{get_individual(individual_id)}}{Get a specific individual by UUID.}
+
+\item{\code{filter_current_user()}}{Create a query to filter encounters by the currently
+authenticated user. Equivalent to \code{filter_by_submitter()} using the logged-in user's ID.
+Can be combined with other filters using \code{combine_queries()}.}
 }
 }
 \seealso{

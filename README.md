@@ -106,6 +106,26 @@ results <- client$search_encounters(
 )
 ```
 
+### My Encounters
+
+```r
+# Get my 10 most recent encounters
+my_encounters <- client$search_encounters(
+  client$filter_current_user(),
+  size = 10,
+  sort = "year",
+  sort_order = "desc"
+)
+
+# Combine with other filters: my encounters of a specific species
+query <- combine_queries(
+  client$filter_current_user(),
+  filter_by_species("Megaptera", "novaeangliae"),
+  operator = "must"
+)
+results <- client$search_encounters(query)
+```
+
 ### Filtering by Species
 
 ```r

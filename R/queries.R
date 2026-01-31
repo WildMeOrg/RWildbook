@@ -49,7 +49,14 @@ filter_by_sex <- function(sex) {
 #' Filter by Species
 #'
 #' @description
-#' Create a query to filter by species (genus and specific epithet)
+#' Create a query to filter by species. Searches across the \code{taxonomy},
+#' \code{genus}, and \code{specificEpithet} fields simultaneously, since not all
+#' encounters populate the same fields. When both genus and specific epithet are
+#' provided, matches either the combined \code{taxonomy} field (e.g.,
+#' \code{"Megaptera novaeangliae"}) or both \code{genus} and
+#' \code{specificEpithet} individually. When only genus is provided, matches
+#' either the \code{taxonomy} field starting with that genus or the \code{genus}
+#' field directly.
 #'
 #' @param genus Genus name
 #' @param specific_epithet Specific epithet (optional)
@@ -65,14 +72,28 @@ filter_by_species <- function(genus, specific_epithet = NULL) {
   if (!is.null(specific_epithet)) {
     list(
       bool = list(
-        must = list(
-          list(term = list(genus = genus)),
-          list(term = list(specificEpithet = specific_epithet))
-        )
+        should = list(
+          list(terms = list(taxonomy = list(paste(genus, specific_epithet)))),
+          list(bool = list(
+            must = list(
+              list(term = list(genus = genus)),
+              list(term = list(specificEpithet = specific_epithet))
+            )
+          ))
+        ),
+        minimum_should_match = 1
       )
     )
   } else {
-    list(term = list(genus = genus))
+    list(
+      bool = list(
+        should = list(
+          list(wildcard = list(taxonomy = list(value = paste0(genus, " *")))),
+          list(term = list(genus = genus))
+        ),
+        minimum_should_match = 1
+      )
+    )
   }
 }
 
