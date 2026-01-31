@@ -40,3 +40,6 @@ RWildbook/RWildbook.Rproj
 ## Git files
 .gitingore
 RWildbook/.gitignore
+
+## Local planning/transition documents
+TRANSITION_PLAN.md
