@@ -282,14 +282,19 @@ WildbookClient <- R6::R6Class(
 
     #' @description
     #' Create a query to filter encounters by the currently authenticated user.
-    #' This is a shortcut for filtering encounters submitted by the logged-in user
-    #' and is equivalent to calling \code{filter_by_submitter()} with the current
-    #' user's ID. The returned query can be combined with other filters using
-    #' \code{combine_queries()}.
-    #' @return A query list filtering by the current user's submitter ID
+    #' Uses the \code{assignedUsername} field to match encounters associated with
+    #' the logged-in user. The returned query can be combined with other filters
+    #' using \code{combine_queries()}.
+    #' @return A query list filtering by the current user's username
     filter_current_user = function() {
       private$check_auth()
-      filter_by_submitter(private$user_info$id)
+      list(
+        bool = list(
+          filter = list(
+            list(terms = list(assignedUsername = list(private$user_info$username)))
+          )
+        )
+      )
     }
   ),
 

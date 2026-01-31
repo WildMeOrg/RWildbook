@@ -55,6 +55,14 @@ test_that("filter_by_species with genus only searches taxonomy and genus", {
   expect_true(has_genus)
 })
 
+test_that("filter_by_species splits a single combined string into genus and epithet", {
+  # Passing "Equus grevyi" as one argument should produce the same query
+  # as passing "Equus" and "grevyi" separately
+  single_arg <- filter_by_species("Equus grevyi")
+  two_args  <- filter_by_species("Equus", "grevyi")
+  expect_equal(single_arg, two_args)
+})
+
 test_that("filter_by_species with genus and epithet searches taxonomy and separate fields", {
   query <- filter_by_species("Megaptera", "novaeangliae")
   expect_true("bool" %in% names(query))

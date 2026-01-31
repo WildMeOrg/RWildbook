@@ -15,7 +15,9 @@ field directly.
 filter_by_species(genus, specific_epithet = NULL)
 }
 \arguments{
-\item{genus}{Genus name}
+\item{genus}{Genus name, or a full species name as a single string
+(e.g., \code{"Equus grevyi"}) which will be automatically split into
+genus and specific epithet.}
 \item{specific_epithet}{Specific epithet (optional)}
 }
 \value{
@@ -24,6 +26,9 @@ A query list suitable for use with \code{WildbookClient$search_encounters()}.
 \examples{
 # Filter by genus and species
 query <- filter_by_species("Megaptera", "novaeangliae")
+
+# Or pass as a single string
+query <- filter_by_species("Megaptera novaeangliae")
 
 # Filter by genus only
 query <- filter_by_species("Megaptera")

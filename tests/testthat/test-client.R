@@ -127,6 +127,11 @@ test_that("methods require authentication", {
     client$get_individual("test-uuid"),
     "Not authenticated"
   )
+
+  expect_error(
+    client$filter_current_user(),
+    "Not authenticated"
+  )
 })
 
 # Test Query Wrapping ----

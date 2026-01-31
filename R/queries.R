@@ -58,7 +58,9 @@ filter_by_sex <- function(sex) {
 #' either the \code{taxonomy} field starting with that genus or the \code{genus}
 #' field directly.
 #'
-#' @param genus Genus name
+#' @param genus Genus name, or a full species name as a single string
+#'   (e.g., \code{"Equus grevyi"}) which will be automatically split into
+#'   genus and specific epithet.
 #' @param specific_epithet Specific epithet (optional)
 #' @return A query list
 #' @export
@@ -66,9 +68,18 @@ filter_by_sex <- function(sex) {
 #' # Filter by genus and species
 #' query <- filter_by_species("Megaptera", "novaeangliae")
 #'
+#' # Or pass as a single string
+#' query <- filter_by_species("Megaptera novaeangliae")
+#'
 #' # Filter by genus only
 #' query <- filter_by_species("Megaptera")
 filter_by_species <- function(genus, specific_epithet = NULL) {
+  if (is.null(specific_epithet) && grepl(" ", genus, fixed = TRUE)) {
+    parts <- strsplit(genus, " ", fixed = TRUE)[[1]]
+    genus <- parts[1]
+    specific_epithet <- paste(parts[-1], collapse = " ")
+  }
+
   if (!is.null(specific_epithet)) {
     list(
       bool = list(
