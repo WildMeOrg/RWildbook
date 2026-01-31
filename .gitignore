@@ -43,3 +43,9 @@ RWildbook/.gitignore
 
 ## Local planning/transition documents
 TRANSITION_PLAN.md
+
+## IDE / dev / robots
+.idea/
+.claude/
+.gemini/
+
