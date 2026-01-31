@@ -1,0 +1,15 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^README\.Rmd$
+^LICENSE\.md$
+^\.github$
+^examples$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$
+^\.covrignore$
+^codecov\.yml$
+^cran-comments\.md$
+^CRAN_READINESS_REVIEW\.md$
+^\.lintr$
+^\.pre-commit-config\.yaml$
