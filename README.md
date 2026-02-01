@@ -141,12 +141,15 @@ results <- client$search_encounters(query)
 ### Filtering by Date Range
 
 ```r
-# Encounters from 2020 to 2023
-query <- filter_by_year_range(start_year = 2020, end_year = 2023)
+# Encounters since 1 November 2025
+query <- filter_by_date_range(start_date = "2025-11-01")
 results <- client$search_encounters(query)
 
-# Encounters from 2020 onwards
-query <- filter_by_year_range(start_year = 2020)
+# Encounters between two dates
+query <- filter_by_date_range(
+  start_date = "2025-11-01",
+  end_date = "2025-12-01"
+)
 results <- client$search_encounters(query)
 ```
 
@@ -239,6 +242,7 @@ The package provides these helper functions for constructing queries:
 - `filter_by_sex(sex)` - Filter by sex
 - `filter_by_species(genus, specific_epithet = NULL)` - Filter by species
 - `filter_by_year_range(start_year, end_year)` - Filter by year range
+- `filter_by_date_range(start_date, end_date)` - Filter by date range (ISO 8601)
 - `filter_by_location(country, location_id, min_lat, max_lat, min_lon, max_lon)` - Filter by location
 - `filter_by_individual(individual_id)` - Find encounters for an individual
 - `filter_by_submitter(submitter_id)` - Filter by submitter
@@ -407,6 +411,7 @@ R6 class for interacting with Wildbook.
 - `$get_encounter(encounter_id)` - Get specific encounter
 - `$search_individuals(query, from = 0, size = 10, sort = NULL, sort_order = NULL)` - Search individuals
 - `$get_individual(individual_id)` - Get specific individual
+- `$filter_current_user()` - Query for encounters by the logged-in user
 
 ## Requirements
 

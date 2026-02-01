@@ -122,6 +122,47 @@ test_that("filter_by_year_range with end only", {
   ))
 })
 
+# Test Date Range Queries ----
+
+test_that("filter_by_date_range with both start and end", {
+  query <- filter_by_date_range("2025-11-01", "2025-12-01")
+  expect_equal(query, list(
+    range = list(
+      date = list(
+        gte = "2025-11-01T00:00:00Z",
+        lte = "2025-12-01T23:59:59Z"
+      )
+    )
+  ))
+})
+
+test_that("filter_by_date_range with start only", {
+  query <- filter_by_date_range(start_date = "2025-11-01")
+  expect_equal(query, list(
+    range = list(
+      date = list(
+        gte = "2025-11-01T00:00:00Z"
+      )
+    )
+  ))
+})
+
+test_that("filter_by_date_range with end only", {
+  query <- filter_by_date_range(end_date = "2025-12-01")
+  expect_equal(query, list(
+    range = list(
+      date = list(
+        lte = "2025-12-01T23:59:59Z"
+      )
+    )
+  ))
+})
+
+test_that("filter_by_date_range accepts Date objects", {
+  query <- filter_by_date_range(start_date = as.Date("2025-11-01"))
+  expect_equal(query$range$date$gte, "2025-11-01T00:00:00Z")
+})
+
 # Test Location Queries ----
 
 test_that("filter_by_location with country", {
@@ -142,8 +183,8 @@ test_that("filter_by_location with bounding box", {
     max_lon = 42.0
   )
   expect_true("geo_bounding_box" %in% names(query))
-  expect_equal(query$geo_bounding_box$location$top_left, list(lat = 5.0, lon = 35.0))
-  expect_equal(query$geo_bounding_box$location$bottom_right, list(lat = -5.0, lon = 42.0))
+  expect_equal(query$geo_bounding_box$locationGeoPoint$top_left, list(lat = 5.0, lon = 35.0))
+  expect_equal(query$geo_bounding_box$locationGeoPoint$bottom_right, list(lat = -5.0, lon = 42.0))
 })
 
 test_that("filter_by_location with multiple parameters", {

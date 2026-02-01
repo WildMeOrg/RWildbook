@@ -136,6 +136,44 @@ filter_by_year_range <- function(start_year = NULL, end_year = NULL) {
   list(range = list(year = range_query))
 }
 
+#' Filter by Date Range
+#'
+#' @description
+#' Create a query to filter by date range using the encounter \code{date} field.
+#' Dates are formatted as ISO 8601 timestamps in UTC. The start date is
+#' interpreted as the beginning of that day (\code{00:00:00Z}) and the end date
+#' as the end of that day (\code{23:59:59Z}).
+#'
+#' @param start_date Earliest date (inclusive). Accepts a \code{Date} object or
+#'   a string in \code{"YYYY-MM-DD"} format (optional).
+#' @param end_date Latest date (inclusive). Accepts a \code{Date} object or
+#'   a string in \code{"YYYY-MM-DD"} format (optional).
+#' @return A query list
+#' @export
+#' @examples
+#' # Encounters since 1 November 2025
+#' query <- filter_by_date_range(start_date = "2025-11-01")
+#'
+#' # Encounters between two dates
+#' query <- filter_by_date_range(start_date = "2025-11-01", end_date = "2025-12-01")
+#'
+#' # Using Date objects
+#' query <- filter_by_date_range(start_date = as.Date("2025-11-01"))
+filter_by_date_range <- function(start_date = NULL, end_date = NULL) {
+  range_query <- list()
+
+  if (!is.null(start_date)) {
+    start_date <- as.Date(start_date)
+    range_query$gte <- paste0(format(start_date, "%Y-%m-%d"), "T00:00:00Z")
+  }
+  if (!is.null(end_date)) {
+    end_date <- as.Date(end_date)
+    range_query$lte <- paste0(format(end_date, "%Y-%m-%d"), "T23:59:59Z")
+  }
+
+  list(range = list(date = range_query))
+}
+
 #' Filter by Location
 #'
 #' @description
@@ -175,7 +213,7 @@ filter_by_location <- function(country = NULL, location_id = NULL,
       !is.null(min_lon) && !is.null(max_lon)) {
     filters <- c(filters, list(list(
       geo_bounding_box = list(
-        location = list(
+        locationGeoPoint = list(
           top_left = list(lat = max_lat, lon = min_lon),
           bottom_right = list(lat = min_lat, lon = max_lon)
         )
