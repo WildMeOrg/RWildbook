@@ -51,44 +51,45 @@ filter_by_sex <- function(sex) {
 #' @description
 #' Create a query to filter by species. Searches across the \code{taxonomy},
 #' \code{genus}, and \code{specificEpithet} fields simultaneously, since not all
-#' encounters populate the same fields. When both genus and specific epithet are
-#' provided, matches either the combined \code{taxonomy} field (e.g.,
-#' \code{"Megaptera novaeangliae"}) or both \code{genus} and
-#' \code{specificEpithet} individually. When only genus is provided, matches
-#' either the \code{taxonomy} field starting with that genus or the \code{genus}
-#' field directly.
+#' encounters populate the same fields. When only a species name is provided,
+#' matches either the \code{taxonomy} field ending with that species or the
+#' \code{specificEpithet} field directly. When genus is also provided (or a
+#' full \code{"Genus species"} string is passed), matches either the combined
+#' \code{taxonomy} field or both \code{genus} and \code{specificEpithet}
+#' individually.
 #'
-#' @param genus Genus name, or a full species name as a single string
-#'   (e.g., \code{"Equus grevyi"}) which will be automatically split into
-#'   genus and specific epithet.
-#' @param specific_epithet Specific epithet (optional)
+#' @param species Species (specific epithet), or a full species name as a
+#'   single string (e.g., \code{"Equus grevyi"}) which will be automatically
+#'   split into genus and species.
+#' @param genus Genus name (optional). When provided, the query matches on
+#'   both genus and species fields.
 #' @return A query list
 #' @export
 #' @examples
-#' # Filter by genus and species
-#' query <- filter_by_species("Megaptera", "novaeangliae")
+#' # Filter by species only
+#' query <- filter_by_species("novaeangliae")
 #'
-#' # Or pass as a single string
+#' # Filter by genus and species as a single string
 #' query <- filter_by_species("Megaptera novaeangliae")
 #'
-#' # Filter by genus only
-#' query <- filter_by_species("Megaptera")
-filter_by_species <- function(genus, specific_epithet = NULL) {
-  if (is.null(specific_epithet) && grepl(" ", genus, fixed = TRUE)) {
-    parts <- strsplit(genus, " ", fixed = TRUE)[[1]]
+#' # Filter by genus and species using both parameters
+#' query <- filter_by_species("novaeangliae", genus = "Megaptera")
+filter_by_species <- function(species, genus = NULL) {
+  if (is.null(genus) && grepl(" ", species, fixed = TRUE)) {
+    parts <- strsplit(species, " ", fixed = TRUE)[[1]]
     genus <- parts[1]
-    specific_epithet <- paste(parts[-1], collapse = " ")
+    species <- paste(parts[-1], collapse = " ")
   }
 
-  if (!is.null(specific_epithet)) {
+  if (!is.null(genus)) {
     list(
       bool = list(
         should = list(
-          list(terms = list(taxonomy = list(paste(genus, specific_epithet)))),
+          list(terms = list(taxonomy = list(paste(genus, species)))),
           list(bool = list(
             must = list(
               list(term = list(genus = genus)),
-              list(term = list(specificEpithet = specific_epithet))
+              list(term = list(specificEpithet = species))
             )
           ))
         ),
@@ -99,8 +100,8 @@ filter_by_species <- function(genus, specific_epithet = NULL) {
     list(
       bool = list(
         should = list(
-          list(wildcard = list(taxonomy = list(value = paste0(genus, " *")))),
-          list(term = list(genus = genus))
+          list(wildcard = list(taxonomy = list(value = paste0("* ", species)))),
+          list(term = list(specificEpithet = species))
         ),
         minimum_should_match = 1
       )
@@ -255,7 +256,7 @@ filter_by_individual <- function(individual_id) {
 #' @export
 #' @examples
 #' # Female humpback whales from 2020-2023
-#' species <- filter_by_species("Megaptera", "novaeangliae")
+#' species <- filter_by_species("Megaptera novaeangliae")
 #' sex <- filter_by_sex("female")
 #' years <- filter_by_year_range(2020, 2023)
 #'

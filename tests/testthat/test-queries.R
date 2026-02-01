@@ -35,36 +35,37 @@ test_that("filter_by_submitter creates correct query", {
 
 # Test Species Queries ----
 
-test_that("filter_by_species with genus only searches taxonomy and genus", {
-  query <- filter_by_species("Megaptera")
+test_that("filter_by_species with species only searches taxonomy and specificEpithet", {
+  query <- filter_by_species("novaeangliae")
   expect_true("bool" %in% names(query))
   expect_true("should" %in% names(query$bool))
   expect_equal(query$bool$minimum_should_match, 1)
   expect_equal(length(query$bool$should), 2)
 
-  # Should contain a wildcard on taxonomy and a term on genus
+  # Should contain a wildcard on taxonomy ending with the species
   has_taxonomy <- any(sapply(query$bool$should, function(x) {
     !is.null(x$wildcard$taxonomy$value) &&
-      x$wildcard$taxonomy$value == "Megaptera *"
+      x$wildcard$taxonomy$value == "* novaeangliae"
   }))
   expect_true(has_taxonomy)
 
-  has_genus <- any(sapply(query$bool$should, function(x) {
-    identical(x, list(term = list(genus = "Megaptera")))
+  # Should contain a term on specificEpithet
+  has_epithet <- any(sapply(query$bool$should, function(x) {
+    identical(x, list(term = list(specificEpithet = "novaeangliae")))
   }))
-  expect_true(has_genus)
+  expect_true(has_epithet)
 })
 
-test_that("filter_by_species splits a single combined string into genus and epithet", {
+test_that("filter_by_species splits a single combined string into genus and species", {
   # Passing "Equus grevyi" as one argument should produce the same query
-  # as passing "Equus" and "grevyi" separately
+  # as passing species + genus separately
   single_arg <- filter_by_species("Equus grevyi")
-  two_args  <- filter_by_species("Equus", "grevyi")
+  two_args  <- filter_by_species("grevyi", genus = "Equus")
   expect_equal(single_arg, two_args)
 })
 
-test_that("filter_by_species with genus and epithet searches taxonomy and separate fields", {
-  query <- filter_by_species("Megaptera", "novaeangliae")
+test_that("filter_by_species with genus and species searches taxonomy and separate fields", {
+  query <- filter_by_species("novaeangliae", genus = "Megaptera")
   expect_true("bool" %in% names(query))
   expect_true("should" %in% names(query$bool))
   expect_equal(query$bool$minimum_should_match, 1)

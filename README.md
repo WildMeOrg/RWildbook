@@ -120,7 +120,7 @@ my_encounters <- client$search_encounters(
 # Combine with other filters: my encounters of a specific species
 query <- combine_queries(
   client$filter_current_user(),
-  filter_by_species("Megaptera", "novaeangliae"),
+  filter_by_species("Megaptera novaeangliae"),
   operator = "must"
 )
 results <- client$search_encounters(query)
@@ -129,12 +129,12 @@ results <- client$search_encounters(query)
 ### Filtering by Species
 
 ```r
-# Search for humpback whales
-query <- filter_by_species("Megaptera", "novaeangliae")
+# Search by species
+query <- filter_by_species("novaeangliae")
 results <- client$search_encounters(query)
 
-# Search by genus only
-query <- filter_by_species("Megaptera")
+# Search by genus and species
+query <- filter_by_species("Megaptera novaeangliae")
 results <- client$search_encounters(query)
 ```
 
@@ -174,7 +174,7 @@ results <- client$search_encounters(query)
 
 ```r
 # Female humpback whales from 2020-2023
-species <- filter_by_species("Megaptera", "novaeangliae")
+species <- filter_by_species("Megaptera novaeangliae")
 sex <- filter_by_sex("female")
 years <- filter_by_year_range(2020, 2023)
 
@@ -240,7 +240,7 @@ The package provides these helper functions for constructing queries:
 
 - `match_all()` - Match all documents
 - `filter_by_sex(sex)` - Filter by sex
-- `filter_by_species(genus, specific_epithet = NULL)` - Filter by species
+- `filter_by_species(species, genus = NULL)` - Filter by species
 - `filter_by_year_range(start_year, end_year)` - Filter by year range
 - `filter_by_date_range(start_date, end_date)` - Filter by date range (ISO 8601)
 - `filter_by_location(country, location_id, min_lat, max_lat, min_lon, max_lon)` - Filter by location
