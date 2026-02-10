@@ -354,6 +354,22 @@ Rscript examples/basic_usage.R
 Rscript examples/advanced_search.R
 ```
 
+## Vignettes
+
+The package includes vignettes demonstrating common use cases:
+
+- **Individual Statistics** - Analyze encounter patterns, count distinct individuals by species, and identify frequently encountered individuals
+
+View vignettes:
+
+```r
+# List all vignettes
+browseVignettes("RWildbook")
+
+# Open a specific vignette
+vignette("individual_statistics", package = "RWildbook")
+```
+
 ## Development
 
 ### Package Structure

@@ -1,0 +1,212 @@
+---
+title: "Individual Statistics"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Individual Statistics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE  # Set to TRUE when running with actual credentials
+)
+```
+
+This vignette demonstrates how to analyze individual encounter patterns over a specified time period. We'll:
+
+1. Count distinct individuals grouped by species
+2. Identify the most frequently encountered individuals
+
+## Setup
+
+First, load the package and authenticate. Set your credentials as environment variables:
+
+```{r}
+library(RWildbook)
+
+# Credentials from environment variables
+# Set these before running: WILDBOOK_URL, WILDBOOK_USERNAME, WILDBOOK_PASSWORD
+client <- WildbookClient$new(base_url = Sys.getenv("WILDBOOK_URL"))
+client$login(
+  username = Sys.getenv("WILDBOOK_USERNAME"),
+  password = Sys.getenv("WILDBOOK_PASSWORD")
+)
+```
+
+## Helper Function: Extract Species Name
+
+The `taxonomy` field is often more reliable than the separate `genus` and `specificEpithet` fields. This helper function tries `taxonomy` first, then falls back to the separate fields.
+
+```{r}
+get_species_name <- function(encounter) {
+  # Try taxonomy field first (most reliable)
+  taxonomy <- encounter$taxonomy
+  if (!is.null(taxonomy) && nchar(taxonomy) > 0) {
+    return(taxonomy)
+  }
+
+  # Fall back to genus + specificEpithet
+  genus <- if (!is.null(encounter$genus)) encounter$genus else ""
+  species <- if (!is.null(encounter$specificEpithet)) encounter$specificEpithet else ""
+
+  combined <- trimws(paste(genus, species))
+  if (nchar(combined) > 0) {
+    return(combined)
+  }
+
+  return("Unknown")
+}
+```
+
+## Search for Encounters from the Past Year
+
+```{r}
+# Calculate date one year ago
+one_year_ago <- format(Sys.Date() - 365, "%Y-%m-%d")
+message("Searching for encounters since ", one_year_ago, "...")
+
+# Search for encounters
+results <- client$search_encounters(
+  query = filter_by_date_range(start_date = one_year_ago),
+  size = 1000,  # Adjust if you expect more encounters
+  sort = "date",
+  sort_order = "desc"
+)
+
+encounters <- results$hits
+message("Found ", length(encounters), " encounters from the past year")
+```
+
+## Analysis 1: Distinct Individuals by Species
+
+Group individuals by species, counting only unique individual IDs per species.
+
+```{r}
+# Build a list of individual IDs per species
+individuals_by_species <- list()
+
+for (enc in encounters) {
+  individual_id <- enc$individualId
+  if (is.null(individual_id)) {
+    next
+  }
+
+  species_name <- get_species_name(enc)
+
+  # Add to set (unique IDs only)
+  if (is.null(individuals_by_species[[species_name]])) {
+    individuals_by_species[[species_name]] <- character(0)
+  }
+  individuals_by_species[[species_name]] <- unique(c(
+    individuals_by_species[[species_name]],
+    individual_id
+  ))
+}
+
+# Create summary data frame
+species_counts <- data.frame(
+  Species = names(individuals_by_species),
+  Count = sapply(individuals_by_species, length),
+  stringsAsFactors = FALSE
+)
+species_counts <- species_counts[order(species_counts$Species), ]
+rownames(species_counts) <- NULL
+
+# Add total row
+total_individuals <- sum(species_counts$Count)
+species_counts <- rbind(
+  species_counts,
+  data.frame(Species = "Total", Count = total_individuals)
+)
+
+knitr::kable(
+  species_counts,
+  caption = "Distinct Individuals by Species",
+  align = c("l", "r")
+)
+```
+
+## Analysis 2: Most Frequently Encountered Individuals
+
+Find the individuals with the most encounters, showing their display name and species.
+
+```{r}
+# Count encounters per individual and store details
+individual_counts <- list()
+individual_details <- list()
+
+for (enc in encounters) {
+  individual_id <- enc$individualId
+  if (is.null(individual_id)) {
+    next
+  }
+
+  # Increment count
+  if (is.null(individual_counts[[individual_id]])) {
+    individual_counts[[individual_id]] <- 0
+  }
+  individual_counts[[individual_id]] <- individual_counts[[individual_id]] + 1
+
+  # Store details (first encounter wins)
+  if (is.null(individual_details[[individual_id]])) {
+    species_name <- get_species_name(enc)
+    display_name <- if (!is.null(enc$individualDisplayName)) {
+      enc$individualDisplayName
+    } else {
+      individual_id
+    }
+    individual_details[[individual_id]] <- list(
+      species = species_name,
+      display_name = display_name
+    )
+  }
+}
+
+# Convert to data frame and sort by count
+individual_df <- data.frame(
+  individual_id = names(individual_counts),
+  encounters = unlist(individual_counts),
+  stringsAsFactors = FALSE
+)
+individual_df <- individual_df[order(-individual_df$encounters), ]
+
+# Add details for top 10
+top_10 <- head(individual_df, 10)
+top_10$display_name <- sapply(top_10$individual_id, function(id) {
+  individual_details[[id]]$display_name
+})
+top_10$species <- sapply(top_10$individual_id, function(id) {
+  individual_details[[id]]$species
+})
+
+# Select and reorder columns
+top_10 <- top_10[, c("display_name", "species", "encounters")]
+colnames(top_10) <- c("Display Name", "Species", "Encounters")
+rownames(top_10) <- NULL
+
+knitr::kable(
+  top_10,
+  caption = "Most Frequently Encountered Individuals",
+  align = c("l", "l", "r")
+)
+```
+
+## Cleanup
+
+```{r}
+client$logout()
+```
+
+## Summary
+
+This vignette demonstrates how to:
+
+- Query encounters from a specific date range using `filter_by_date_range()`
+- Extract species names reliably using the `taxonomy` field with fallback
+- Aggregate individual-level statistics from encounter data
+- Present results in formatted tables
+
+The same patterns can be adapted for other time periods, species-specific analyses, or more complex queries using `combine_queries()`.

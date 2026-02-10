@@ -13,3 +13,4 @@
 ^CRAN_READINESS_REVIEW\.md$
 ^\.lintr$
 ^\.pre-commit-config\.yaml$
+vignettes/*.html
