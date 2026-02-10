@@ -1,6 +1,10 @@
 # RWildbook: R Client for Wildbook v3 API
 
 An R package for interacting with the Wildbook v3 API. This package provides an interface for authenticating with Wildbook instances and searching for encounters, individuals, and other data.
+For a Python client with aligned functionality see [pywildbook](https://github.com/WildMeOrg/pywildbook).
+
+Many thanks to [Simon Bonner](https://github.com/sjbonner) for the conception and development of this project for the Wildbook v1 API. 
+
 
 ## Features
 
@@ -442,13 +446,15 @@ R6 class for interacting with Wildbook.
 
 ## Support
 
-For issues and questions:
-- GitHub Issues: https://github.com/WildMeOrg/RWildbook/issues
-- Wildbook Documentation: https://docs.wildme.org/
+For issues, questions, and more information:
+- [GitHub Issues](https://github.com/WildMeOrg/RWildbook/issues)
+- [Wildbook OpenAPI.yaml](https://github.com/WildMeOrg/Wildbook/blob/main/src/main/resources/openapi.yaml)
+- [Wildbook Documentation](https://docs.wildme.org/)
 
 ## Related Projects
 
 - [Wildbook](https://github.com/WildMeOrg/Wildbook) - The main Wildbook platform
+- [pywildbook](https://github.com/WildMeOrg/pywildbook) - An Python client with aligned functionality
 
 ## Acknowledgments
 
