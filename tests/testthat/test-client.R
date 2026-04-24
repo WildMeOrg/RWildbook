@@ -238,7 +238,7 @@ make_mock_response <- function(status, body = list(), set_cookie = NULL) {
 test_that("search_encounters sends correct default URL query params", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   captured_req <- NULL
   local_mocked_bindings(
@@ -258,7 +258,7 @@ test_that("search_encounters sends correct default URL query params", {
 test_that("search_encounters includes sort params when provided", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   captured_req <- NULL
   local_mocked_bindings(
@@ -278,7 +278,7 @@ test_that("search_encounters includes sort params when provided", {
 test_that("search_individuals sends correct default URL query params", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   captured_req <- NULL
   local_mocked_bindings(
@@ -298,7 +298,7 @@ test_that("search_individuals sends correct default URL query params", {
 test_that("search_individuals respects custom from and size params", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   captured_req <- NULL
   local_mocked_bindings(
@@ -327,7 +327,6 @@ test_that("WildbookClient has safe_perform private method", {
 test_that("401 response produces Authentication error message", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
 
   local_mocked_bindings(
     req_perform = function(req, ...) {
@@ -339,10 +338,28 @@ test_that("401 response produces Authentication error message", {
   expect_error(client$get_current_user(), "Authentication error: Invalid credentials")
 })
 
+test_that("401 response does not clear authenticated state", {
+  # A 401 from an API call means the server rejected the request, but the
+  # local session state is unchanged — the caller must decide whether to
+  # re-authenticate. This mirrors pywildbook behaviour.
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      make_mock_response(401, list(error = "Token expired"))
+    },
+    .package = "httr2"
+  )
+
+  expect_error(client$get_current_user(), "Authentication error")
+  expect_true(client$is_authenticated())
+})
+
 test_that("403 response produces Access forbidden error", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   local_mocked_bindings(
     req_perform = function(req, ...) make_mock_response(403),
@@ -355,7 +372,7 @@ test_that("403 response produces Access forbidden error", {
 test_that("404 response produces Resource not found error", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   local_mocked_bindings(
     req_perform = function(req, ...) make_mock_response(404),
@@ -368,7 +385,7 @@ test_that("404 response produces Resource not found error", {
 test_that("400 response with errors array produces joined error message", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   local_mocked_bindings(
     req_perform = function(req, ...) {
@@ -389,7 +406,7 @@ test_that("400 response with errors array produces joined error message", {
 test_that("400 response without errors array produces Bad request message", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   local_mocked_bindings(
     req_perform = function(req, ...) make_mock_response(400),
@@ -405,7 +422,7 @@ test_that("400 response without errors array produces Bad request message", {
 test_that("200 response returns parsed data", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   local_mocked_bindings(
     req_perform = function(req, ...) {
