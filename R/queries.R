@@ -202,6 +202,18 @@ filter_by_location <- function(country = NULL, location_id = NULL,
                                min_lon = NULL, max_lon = NULL) {
   filters <- list()
 
+  bbox_params <- list(min_lat = min_lat, max_lat = max_lat,
+                      min_lon = min_lon, max_lon = max_lon)
+  bbox_provided <- names(Filter(function(x) !is.null(x) && !is.na(x), bbox_params))
+  if (length(bbox_provided) > 0 && length(bbox_provided) < 4) {
+    bbox_missing <- setdiff(names(bbox_params), bbox_provided)
+    stop(paste0(
+      "Incomplete bounding box: provided [", paste(bbox_provided, collapse = ", "),
+      "], missing [", paste(bbox_missing, collapse = ", "),
+      "]. Supply all four of min_lat, max_lat, min_lon, max_lon."
+    ), call. = FALSE)
+  }
+
   if (!is.null(country)) {
     filters <- c(filters, list(list(term = list(country = country))))
   }
@@ -211,7 +223,9 @@ filter_by_location <- function(country = NULL, location_id = NULL,
   }
 
   if (!is.null(min_lat) && !is.null(max_lat) &&
-      !is.null(min_lon) && !is.null(max_lon)) {
+      !is.null(min_lon) && !is.null(max_lon) &&
+      !is.na(min_lat) && !is.na(max_lat) &&
+      !is.na(min_lon) && !is.na(max_lon)) {
     filters <- c(filters, list(list(
       geo_bounding_box = list(
         locationGeoPoint = list(
@@ -262,11 +276,14 @@ filter_by_individual <- function(individual_id) {
 #'
 #' query <- combine_queries(species, sex, years, operator = "must")
 combine_queries <- function(..., operator = "must") {
+  operator <- match.arg(operator, c("must", "should", "must_not"))
   queries <- list(...)
 
   if (length(queries) == 0) {
     return(match_all())
-  } else if (length(queries) == 1) {
+  # Only unwrap for "must": should/must_not with a single query must keep the
+  # bool envelope — dropping it silently removes the operator's semantic effect.
+  } else if (length(queries) == 1 && operator == "must") {
     return(queries[[1]])
   }
 
