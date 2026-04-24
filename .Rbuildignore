@@ -15,3 +15,6 @@
 ^\.pre-commit-config\.yaml$
 ^vignettes/.*\.html$
 ^archive$
+^\.claude$
+^CLAUDE\.md$
+^tests/test_queries\.R$
