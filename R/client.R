@@ -96,12 +96,7 @@ WildbookClient <- R6::R6Class(
           password = password
         ))
 
-      resp <- tryCatch(
-        httr2::req_perform(req),
-        error = function(e) {
-          stop("Login request failed: ", e$message, call. = FALSE)
-        }
-      )
+      resp <- private$safe_perform(req)
 
       data <- private$handle_response(resp)
 
@@ -132,7 +127,7 @@ WildbookClient <- R6::R6Class(
       }
 
       tryCatch({
-        resp <- httr2::req_perform(req)
+        resp <- private$safe_perform(req)
         data <- private$handle_response(resp)
         private$authenticated <- FALSE
         private$user_info <- NULL
@@ -165,7 +160,7 @@ WildbookClient <- R6::R6Class(
       url <- private$make_url(API_USER)
       req <- private$make_authenticated_request(url)
 
-      resp <- httr2::req_perform(req)
+      resp <- private$safe_perform(req)
       private$handle_response(resp)
     },
 
@@ -178,7 +173,7 @@ WildbookClient <- R6::R6Class(
       url <- private$make_url(API_HOME)
       req <- private$make_authenticated_request(url)
 
-      resp <- httr2::req_perform(req)
+      resp <- private$safe_perform(req)
       private$handle_response(resp)
     },
 
@@ -213,7 +208,7 @@ WildbookClient <- R6::R6Class(
 
       req <- do.call(httr2::req_url_query, c(list(req), params))
 
-      resp <- httr2::req_perform(req)
+      resp <- private$safe_perform(req)
       private$handle_response(resp)
     },
 
@@ -227,7 +222,7 @@ WildbookClient <- R6::R6Class(
       url <- private$make_url(paste0(API_ENCOUNTERS_BASE, encounter_id))
       req <- private$make_authenticated_request(url)
 
-      resp <- httr2::req_perform(req)
+      resp <- private$safe_perform(req)
       private$handle_response(resp)
     },
 
@@ -262,7 +257,7 @@ WildbookClient <- R6::R6Class(
 
       req <- do.call(httr2::req_url_query, c(list(req), params))
 
-      resp <- httr2::req_perform(req)
+      resp <- private$safe_perform(req)
       private$handle_response(resp)
     },
 
@@ -276,7 +271,7 @@ WildbookClient <- R6::R6Class(
       url <- private$make_url(paste0(API_INDIVIDUALS_BASE, individual_id))
       req <- private$make_authenticated_request(url)
 
-      resp <- httr2::req_perform(req)
+      resp <- private$safe_perform(req)
       private$handle_response(resp)
     },
 
@@ -325,6 +320,13 @@ WildbookClient <- R6::R6Class(
       if (!private$authenticated) {
         stop("Not authenticated. Call login() first.", call. = FALSE)
       }
+    },
+
+    # Suppress httr2's automatic error-on-4xx/5xx so handle_response()
+    # can classify errors with package-specific messages.
+    safe_perform = function(req) {
+      httr2::req_error(req, is_error = function(resp) FALSE) |>
+        httr2::req_perform()
     },
 
     # Handle API response and raise appropriate errors
