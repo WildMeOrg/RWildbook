@@ -22,7 +22,6 @@ Depends:
     R (>= 4.2.0)
 Imports:
     httr2 (>= 1.0.0),
-    jsonlite (>= 1.8.0),
     R6 (>= 2.5.0)
 Suggests:
     testthat (>= 3.2.1),
