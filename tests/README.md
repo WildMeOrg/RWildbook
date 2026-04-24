@@ -164,5 +164,4 @@ The R test suite mirrors the Python client tests in `wildbook-python-client/test
 
 ## See Also
 
-- [TESTING.md](../TESTING.md) - Detailed testing guide
 - [README.md](../README.md) - Package documentation
