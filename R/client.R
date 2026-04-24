@@ -182,29 +182,7 @@ WildbookClient <- R6::R6Class(
     #' @return Search results list with hits and metadata
     search_encounters = function(query, from = 0, size = 10, sort = NULL, sort_order = NULL) {
       private$check_auth()
-
-      url <- private$make_url(API_SEARCH_ENCOUNTER)
-
-      # Wrap query in "query" key if not already wrapped
-      if (!("query" %in% names(query))) {
-        search_body <- list(query = query)
-      } else {
-        search_body <- query
-      }
-
-      req <- private$make_authenticated_request(url) |>
-        httr2::req_method("POST") |>
-        httr2::req_body_json(search_body)
-
-      # Add query parameters
-      params <- list(from = from, size = size)
-      if (!is.null(sort)) params$sort <- sort
-      if (!is.null(sort_order)) params$sortOrder <- sort_order
-
-      req <- do.call(httr2::req_url_query, c(list(req), params))
-
-      resp <- private$safe_perform(req)
-      private$handle_response(resp)
+      private$search_resource(API_SEARCH_ENCOUNTER, query, from, size, sort, sort_order)
     },
 
     #' @description
@@ -231,29 +209,7 @@ WildbookClient <- R6::R6Class(
     #' @return Search results list with hits and metadata
     search_individuals = function(query, from = 0, size = 10, sort = NULL, sort_order = NULL) {
       private$check_auth()
-
-      url <- private$make_url(API_SEARCH_INDIVIDUAL)
-
-      # Wrap query in "query" key if not already wrapped
-      if (!("query" %in% names(query))) {
-        search_body <- list(query = query)
-      } else {
-        search_body <- query
-      }
-
-      req <- private$make_authenticated_request(url) |>
-        httr2::req_method("POST") |>
-        httr2::req_body_json(search_body)
-
-      # Add query parameters
-      params <- list(from = from, size = size)
-      if (!is.null(sort)) params$sort <- sort
-      if (!is.null(sort_order)) params$sortOrder <- sort_order
-
-      req <- do.call(httr2::req_url_query, c(list(req), params))
-
-      resp <- private$safe_perform(req)
-      private$handle_response(resp)
+      private$search_resource(API_SEARCH_INDIVIDUAL, query, from, size, sort, sort_order)
     },
 
     #' @description
@@ -317,6 +273,30 @@ WildbookClient <- R6::R6Class(
     safe_perform = function(req) {
       httr2::req_error(req, is_error = function(resp) FALSE) |>
         httr2::req_perform()
+    },
+
+    # Shared logic for search_encounters and search_individuals.
+    search_resource = function(endpoint, query, from, size, sort, sort_order) {
+      url <- private$make_url(endpoint)
+
+      if (!("query" %in% names(query))) {
+        search_body <- list(query = query)
+      } else {
+        search_body <- query
+      }
+
+      req <- private$make_authenticated_request(url) |>
+        httr2::req_method("POST") |>
+        httr2::req_body_json(search_body)
+
+      params <- list(from = from, size = size)
+      if (!is.null(sort)) params$sort <- sort
+      if (!is.null(sort_order)) params$sortOrder <- sort_order
+
+      req <- do.call(httr2::req_url_query, c(list(req), params))
+
+      resp <- private$safe_perform(req)
+      private$handle_response(resp)
     },
 
     # Handle API response and raise appropriate errors

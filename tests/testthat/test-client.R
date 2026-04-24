@@ -324,6 +324,13 @@ test_that("WildbookClient has safe_perform private method", {
   )
 })
 
+test_that("WildbookClient has search_resource private method", {
+  client <- WildbookClient$new("http://localhost:8080")
+  expect_true(
+    is.function(client$.__enclos_env__$private$search_resource)
+  )
+})
+
 test_that("401 response produces Authentication error message", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
