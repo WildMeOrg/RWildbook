@@ -10,11 +10,9 @@ library(RWildbook)
 # Helper to check if httptest2 is available
 has_httptest2 <- requireNamespace("httptest2", quietly = TRUE)
 
-if (!has_httptest2) {
-  skip("httptest2 not available - skipping client tests")
+if (has_httptest2) {
+  library(httptest2)
 }
-
-library(httptest2)
 
 # Test Client Initialization ----
 
@@ -54,6 +52,7 @@ test_that("WildbookClient strips trailing slash from base_url", {
 # Test Authentication ----
 
 test_that("login with explicit credentials", {
+  skip_if_not(has_httptest2, "httptest2 not available")
   with_mock_dir("login_success", {
     client <- WildbookClient$new("http://localhost:8080")
 
@@ -217,4 +216,100 @@ test_that("complex query serializes correctly", {
   expect_true("query" %in% names(parsed))
   expect_true("bool" %in% names(parsed$query))
   expect_true("must" %in% names(parsed$query$bool))
+})
+
+# Helper: creates a minimal httr2_response object for mocking req_perform
+make_mock_response <- function(status, body = list(), set_cookie = NULL) {
+  headers <- list(`content-type` = "application/json")
+  if (!is.null(set_cookie)) headers[["set-cookie"]] <- set_cookie
+  structure(
+    list(
+      status_code = as.integer(status),
+      url = "http://localhost:8080/test",
+      method = "POST",
+      headers = structure(headers, class = c("httr2_headers", "list")),
+      body = charToRaw(jsonlite::toJSON(body, auto_unbox = TRUE))
+    ),
+    class = "httr2_response"
+  )
+}
+
+test_that("search_encounters sends correct default URL query params", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
+  captured_req <- NULL
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      captured_req <<- req
+      make_mock_response(200, list(hits = list(), total = 0))
+    },
+    .package = "httr2"
+  )
+
+  client$search_encounters(list(match_all = list()))
+
+  expect_true(grepl("from=0", captured_req$url))
+  expect_true(grepl("size=10", captured_req$url))
+})
+
+test_that("search_encounters includes sort params when provided", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
+  captured_req <- NULL
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      captured_req <<- req
+      make_mock_response(200, list(hits = list(), total = 0))
+    },
+    .package = "httr2"
+  )
+
+  client$search_encounters(list(match_all = list()), sort = "year", sort_order = "desc")
+
+  expect_true(grepl("sort=year", captured_req$url))
+  expect_true(grepl("sortOrder=desc", captured_req$url))
+})
+
+test_that("search_individuals sends correct default URL query params", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
+  captured_req <- NULL
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      captured_req <<- req
+      make_mock_response(200, list(hits = list(), total = 0))
+    },
+    .package = "httr2"
+  )
+
+  client$search_individuals(list(match_all = list()))
+
+  expect_true(grepl("from=0", captured_req$url))
+  expect_true(grepl("size=10", captured_req$url))
+})
+
+test_that("search_individuals respects custom from and size params", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
+  captured_req <- NULL
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      captured_req <<- req
+      make_mock_response(200, list(hits = list(), total = 0))
+    },
+    .package = "httr2"
+  )
+
+  client$search_individuals(list(match_all = list()), from = 20, size = 50)
+
+  expect_true(grepl("from=20", captured_req$url))
+  expect_true(grepl("size=50", captured_req$url))
 })

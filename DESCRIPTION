@@ -25,7 +25,7 @@ Imports:
     jsonlite (>= 1.8.0),
     R6 (>= 2.5.0)
 Suggests:
-    testthat (>= 3.0.0),
+    testthat (>= 3.2.1),
     httptest2,
     withr,
     knitr,

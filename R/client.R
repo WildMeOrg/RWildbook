@@ -211,7 +211,7 @@ WildbookClient <- R6::R6Class(
       if (!is.null(sort)) params$sort <- sort
       if (!is.null(sort_order)) params$sortOrder <- sort_order
 
-      req <- httr2::req_url_query(req, !!!params)
+      req <- do.call(httr2::req_url_query, c(list(req), params))
 
       resp <- httr2::req_perform(req)
       private$handle_response(resp)
@@ -260,7 +260,7 @@ WildbookClient <- R6::R6Class(
       if (!is.null(sort)) params$sort <- sort
       if (!is.null(sort_order)) params$sortOrder <- sort_order
 
-      req <- httr2::req_url_query(req, !!!params)
+      req <- do.call(httr2::req_url_query, c(list(req), params))
 
       resp <- httr2::req_perform(req)
       private$handle_response(resp)
