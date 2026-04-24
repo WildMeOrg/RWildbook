@@ -20,7 +20,6 @@ API_INDIVIDUALS_BASE <- '/api/v3/individuals/'
 #'
 #' @import R6
 #' @import httr2
-#' @import jsonlite
 #'
 #' @export
 #' @examples

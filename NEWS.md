@@ -32,7 +32,7 @@ This is a complete rewrite of the RWildbook package to support the Wildbook v3 A
 
 * Comprehensive README with examples
 * Full roxygen2 documentation for all exported functions
-* 78 unit tests with 100% pass rate using testthat 3.x
+* 55 unit tests (108 assertions) with 100% pass rate using testthat 3.x
 * httptest2 integration for mocking HTTP requests in tests
 
 ### Dependencies

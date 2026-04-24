@@ -17,7 +17,7 @@ Description: Provides an R interface to the 'Wildbook' v3 REST API
     This is a complete rewrite of the legacy package for the modern API.
 License: MIT + file LICENSE
 Encoding: UTF-8
-RoxygenNote: 7.2.0
+RoxygenNote: 7.3.3
 Depends:
     R (>= 4.2.0)
 Imports:
