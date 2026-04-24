@@ -8,6 +8,11 @@
 
 library(RWildbook)
 
+# Helper function for NULL coalescing
+`%||%` <- function(x, y) {
+  if (is.null(x)) y else x
+}
+
 # Configuration - credentials will be automatically picked up from environment variables
 # WILDBOOK_URL, WILDBOOK_USERNAME, WILDBOOK_PASSWORD
 
@@ -68,8 +73,3 @@ tryCatch({
 })
 
 cat("Done!\n")
-
-# Helper function for NULL coalescing
-`%||%` <- function(x, y) {
-  if (is.null(x)) y else x
-}

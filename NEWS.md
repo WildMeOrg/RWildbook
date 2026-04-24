@@ -16,7 +16,7 @@ This is a complete rewrite of the RWildbook package to support the Wildbook v3 A
 
 * **Not compatible with RWildbook v0.9.x** - Legacy JDOQL-based interface removed
 * **Requires Wildbook v3 API** - Will not work with older Wildbook versions
-* **Minimum R version now 4.0.0** - Required for native pipe operator support
+* **Minimum R version now 4.2.0** - This is the tidyverse support floor and the minimum version tested and supported by RWildbook
 * Complete API redesign - All functions from v0.9.x have been replaced
 
 ### New Features
@@ -32,7 +32,7 @@ This is a complete rewrite of the RWildbook package to support the Wildbook v3 A
 
 * Comprehensive README with examples
 * Full roxygen2 documentation for all exported functions
-* 78 unit tests with 100% pass rate using testthat 3.x
+* 55 unit tests (108 assertions) with 100% pass rate using testthat 3.x
 * httptest2 integration for mocking HTTP requests in tests
 
 ### Dependencies

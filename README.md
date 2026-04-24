@@ -36,10 +36,13 @@ library(RWildbook)
 ```r
 library(RWildbook)
 
+# Define null-coalescing operator if not already available
+`%||%` <- function(x, y) if (is.null(x)) y else x
+
 # Create a client instance
 # The base URL can also be set via the WILDBOOK_URL environment variable
 client <- WildbookClient$new(Sys.getenv("WILDBOOK_URL", "http://localhost:8080"))
-
+```
 # Login
 # Credentials can be passed directly or sourced from WILDBOOK_USERNAME and WILDBOOK_PASSWORD environment variables
 client$login()
@@ -435,7 +438,7 @@ R6 class for interacting with Wildbook.
 
 ## Requirements
 
-- R >= 4.0.0
+- R >= 4.2.0
 - httr2 >= 1.0.0
 - jsonlite >= 1.8.0
 - R6 >= 2.5.0

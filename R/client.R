@@ -20,7 +20,6 @@ API_INDIVIDUALS_BASE <- '/api/v3/individuals/'
 #'
 #' @import R6
 #' @import httr2
-#' @import jsonlite
 #'
 #' @export
 #' @examples
@@ -61,7 +60,7 @@ WildbookClient <- R6::R6Class(
       }
       self$base_url <- sub("/$", "", base_url)
       private$authenticated <- FALSE
-      private$session_cookies <- NULL
+      private$cookie_path <- tempfile(pattern = "wildbook_cookies_")
       private$user_info <- NULL
     },
 
@@ -94,22 +93,16 @@ WildbookClient <- R6::R6Class(
         httr2::req_body_json(list(
           username = username,
           password = password
-        ))
+        )) |>
+        httr2::req_cookie_preserve(private$cookie_path)
 
-      resp <- tryCatch(
-        httr2::req_perform(req),
-        error = function(e) {
-          stop("Login request failed: ", e$message, call. = FALSE)
-        }
-      )
+      resp <- private$safe_perform(req)
 
       data <- private$handle_response(resp)
 
       if (isTRUE(data$success)) {
         private$authenticated <- TRUE
         private$user_info <- data
-        # Extract cookies from response
-        private$session_cookies <- resp$headers$`set-cookie`
 
         message("Logged in successfully as: ", data$username)
         invisible(data)
@@ -125,25 +118,22 @@ WildbookClient <- R6::R6Class(
       url <- private$make_url(API_LOGOUT)
 
       req <- httr2::request(url) |>
-        httr2::req_method("POST")
-
-      if (!is.null(private$session_cookies)) {
-        req <- httr2::req_headers(req, Cookie = private$session_cookies)
-      }
+        httr2::req_method("POST") |>
+        httr2::req_cookie_preserve(private$cookie_path)
 
       tryCatch({
-        resp <- httr2::req_perform(req)
+        resp <- private$safe_perform(req)
         data <- private$handle_response(resp)
         private$authenticated <- FALSE
         private$user_info <- NULL
-        private$session_cookies <- NULL
+        if (file.exists(private$cookie_path)) file.remove(private$cookie_path)
         message("Logged out successfully")
         invisible(TRUE)
       }, error = function(e) {
         # Clear session even on error
         private$authenticated <- FALSE
         private$user_info <- NULL
-        private$session_cookies <- NULL
+        if (file.exists(private$cookie_path)) file.remove(private$cookie_path)
         warning("Logout request failed but session cleared: ", e$message)
         invisible(FALSE)
       })
@@ -165,7 +155,7 @@ WildbookClient <- R6::R6Class(
       url <- private$make_url(API_USER)
       req <- private$make_authenticated_request(url)
 
-      resp <- httr2::req_perform(req)
+      resp <- private$safe_perform(req)
       private$handle_response(resp)
     },
 
@@ -178,7 +168,7 @@ WildbookClient <- R6::R6Class(
       url <- private$make_url(API_HOME)
       req <- private$make_authenticated_request(url)
 
-      resp <- httr2::req_perform(req)
+      resp <- private$safe_perform(req)
       private$handle_response(resp)
     },
 
@@ -211,9 +201,9 @@ WildbookClient <- R6::R6Class(
       if (!is.null(sort)) params$sort <- sort
       if (!is.null(sort_order)) params$sortOrder <- sort_order
 
-      req <- httr2::req_url_query(req, !!!params)
+      req <- do.call(httr2::req_url_query, c(list(req), params))
 
-      resp <- httr2::req_perform(req)
+      resp <- private$safe_perform(req)
       private$handle_response(resp)
     },
 
@@ -227,7 +217,7 @@ WildbookClient <- R6::R6Class(
       url <- private$make_url(paste0(API_ENCOUNTERS_BASE, encounter_id))
       req <- private$make_authenticated_request(url)
 
-      resp <- httr2::req_perform(req)
+      resp <- private$safe_perform(req)
       private$handle_response(resp)
     },
 
@@ -260,9 +250,9 @@ WildbookClient <- R6::R6Class(
       if (!is.null(sort)) params$sort <- sort
       if (!is.null(sort_order)) params$sortOrder <- sort_order
 
-      req <- httr2::req_url_query(req, !!!params)
+      req <- do.call(httr2::req_url_query, c(list(req), params))
 
-      resp <- httr2::req_perform(req)
+      resp <- private$safe_perform(req)
       private$handle_response(resp)
     },
 
@@ -276,7 +266,7 @@ WildbookClient <- R6::R6Class(
       url <- private$make_url(paste0(API_INDIVIDUALS_BASE, individual_id))
       req <- private$make_authenticated_request(url)
 
-      resp <- httr2::req_perform(req)
+      resp <- private$safe_perform(req)
       private$handle_response(resp)
     },
 
@@ -300,7 +290,7 @@ WildbookClient <- R6::R6Class(
 
   private = list(
     authenticated = FALSE,
-    session_cookies = NULL,
+    cookie_path = NULL,
     user_info = NULL,
 
     # Construct full URL from path
@@ -311,13 +301,8 @@ WildbookClient <- R6::R6Class(
 
     # Create authenticated request with session cookie
     make_authenticated_request = function(url) {
-      req <- httr2::request(url)
-
-      if (!is.null(private$session_cookies)) {
-        req <- httr2::req_headers(req, Cookie = private$session_cookies)
-      }
-
-      req
+      httr2::request(url) |>
+        httr2::req_cookie_preserve(private$cookie_path)
     },
 
     # Check if authenticated, throw error if not
@@ -325,6 +310,13 @@ WildbookClient <- R6::R6Class(
       if (!private$authenticated) {
         stop("Not authenticated. Call login() first.", call. = FALSE)
       }
+    },
+
+    # Suppress httr2's automatic error-on-4xx/5xx so handle_response()
+    # can classify errors with package-specific messages.
+    safe_perform = function(req) {
+      httr2::req_error(req, is_error = function(resp) FALSE) |>
+        httr2::req_perform()
     },
 
     # Handle API response and raise appropriate errors

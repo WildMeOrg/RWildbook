@@ -3,9 +3,10 @@ Type: Package
 Title: Client for the 'Wildbook' Wildlife Photo-Identification Database
 Version: 1.0.0
 Authors@R: c(
-    person("Wild Me", email = "dev@wildme.org", role = c("aut", "cre", "cph")),
-    person("Simon", "Bonner", email = "sbonner6@uwo.ca", role = "ctb"),
-    person("Xinxin", "Huang", email = "xhuan63@uwo.ca", role = "ctb")
+    person("Conservation X Labs", role = "cph"),
+    person("Kirk", "Larsen", email = "georgetownpolecat@gmail.com", role = c("aut", "cre")),
+    person("Simon", "Bonner", email = "sbonner6@uwo.ca", role = "aut"),
+    person("Xinxin", "Huang", email = "xhuan63@uwo.ca", role = "aut")
     )
 Description: Provides an R interface to the 'Wildbook' v3 REST API
     <https://docs.wildme.org/> for wildlife photo-identification and
@@ -16,16 +17,15 @@ Description: Provides an R interface to the 'Wildbook' v3 REST API
     This is a complete rewrite of the legacy package for the modern API.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
-RoxygenNote: 7.2.0
+RoxygenNote: 7.3.3
 Depends:
-    R (>= 4.0.0)
+    R (>= 4.2.0)
 Imports:
     httr2 (>= 1.0.0),
     jsonlite (>= 1.8.0),
     R6 (>= 2.5.0)
 Suggests:
-    testthat (>= 3.0.0),
+    testthat (>= 3.2.1),
     httptest2,
     withr,
     knitr,

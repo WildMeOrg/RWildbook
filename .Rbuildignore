@@ -13,4 +13,9 @@
 ^CRAN_READINESS_REVIEW\.md$
 ^\.lintr$
 ^\.pre-commit-config\.yaml$
-vignettes/*.html
+^vignettes/.*\.html$
+^archive$
+^\.claude$
+^CLAUDE\.md$
+^GEMINI\.md$
+^tests/test_queries\.R$
