@@ -47,5 +47,8 @@ TRANSITION_PLAN.md
 ## IDE / dev / robots
 .idea/
 .claude/
+CLAUDE.md
 .gemini/
+issue-list
+docs/
 
