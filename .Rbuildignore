@@ -17,4 +17,5 @@
 ^archive$
 ^\.claude$
 ^CLAUDE\.md$
+^GEMINI\.md$
 ^tests/test_queries\.R$

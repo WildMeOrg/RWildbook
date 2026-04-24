@@ -72,6 +72,7 @@ This package is a client for the Wildbook v3 API:
 
 * MIT License (more permissive than previous GPL >= 2)
 * Approved by Wild Me organization
+* RWildbook 1.0.0 is a complete rewrite for the Wildbook v3 API with no code carryover from the legacy JDOQL-based version. We have moved from GPL to the MIT license to align with our current organizational standards.
 
 ### First Submission Expectations
 
@@ -85,6 +86,6 @@ We are committed to addressing any feedback promptly.
 
 ## Contact
 
-Maintainer: Wild Me <dev@wildme.org>
+Maintainer: Kirk Larsen <georgetownpolecat@gmail.com>
 GitHub: https://github.com/WildMeOrg/RWildbook
 Issues: https://github.com/WildMeOrg/RWildbook/issues
