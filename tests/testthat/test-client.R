@@ -331,6 +331,15 @@ test_that("WildbookClient has search_resource private method", {
   )
 })
 
+test_that("search_encounters rejects invalid sort_order", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  expect_error(
+    client$search_encounters(match_all(), sort_order = "DESC"),
+    "should be one of"
+  )
+})
+
 test_that("401 response produces Authentication error message", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE

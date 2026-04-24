@@ -285,6 +285,10 @@ WildbookClient <- R6::R6Class(
         search_body <- query
       }
 
+      if (!is.null(sort_order)) {
+        sort_order <- match.arg(sort_order, c("asc", "desc"))
+      }
+
       req <- private$make_authenticated_request(url) |>
         httr2::req_method("POST") |>
         httr2::req_body_json(search_body)
