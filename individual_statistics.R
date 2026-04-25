@@ -1,42 +1,24 @@
----
-title: "Individual Statistics"
-output: rmarkdown::html_vignette
-vignette: >
-  %\VignetteIndexEntry{Individual Statistics}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}
----
-
-```{r setup, include = FALSE}
+## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   eval = FALSE  # Set to TRUE when running with actual credentials
 )
-```
 
-This vignette demonstrates how to analyze individual encounter patterns over a specified time period. We'll:
 
-1. Count distinct individuals grouped by species
-2. Identify the most frequently encountered individuals
+## ----eval=FALSE---------------------------------------------------------------
+# library(RWildbook)
+# 
+# # ── Choose ONE of the two authentication options below ───────────────────────
+# 
+# # Option A (recommended): with_wildbook_client() handles login and logout
+# # automatically. Place all analysis code inside the function body.
+# with_wildbook_client(\(client) {
+#   # ... analysis code using client goes here ...
+# })
 
-## Setup
 
-First, load the package and authenticate. Set your credentials as environment variables:
-
-```{r, eval=FALSE}
-library(RWildbook)
-
-# ── Choose ONE of the two authentication options below ───────────────────────
-
-# Option A (recommended): with_wildbook_client() handles login and logout
-# automatically. Place all analysis code inside the function body.
-with_wildbook_client(\(client) {
-  # ... analysis code using client goes here ...
-})
-```
-
-```{r}
+## -----------------------------------------------------------------------------
 library(RWildbook)
 
 # Option B (explicit): manual login/logout — used throughout this vignette
@@ -46,13 +28,9 @@ client$login(
   username = Sys.getenv("WILDBOOK_USERNAME"),
   password = Sys.getenv("WILDBOOK_PASSWORD")
 )
-```
 
-## Helper Function: Extract Species Name
 
-The `taxonomy` field is often more reliable than the separate `genus` and `specificEpithet` fields. This helper function tries `taxonomy` first, then falls back to the separate fields.
-
-```{r}
+## -----------------------------------------------------------------------------
 get_species_name <- function(encounter) {
   # Try taxonomy field first (most reliable)
   taxonomy <- encounter$taxonomy
@@ -71,11 +49,9 @@ get_species_name <- function(encounter) {
 
   return("Unknown")
 }
-```
 
-## Search for Encounters from the Past Year
 
-```{r}
+## -----------------------------------------------------------------------------
 # Calculate date one year ago
 one_year_ago <- format(Sys.Date() - 365, "%Y-%m-%d")
 message("Searching for encounters since ", one_year_ago, "...")
@@ -90,13 +66,9 @@ results <- client$search_encounters(
 
 encounters <- results$hits
 message("Found ", length(encounters), " encounters from the past year")
-```
 
-## Analysis 1: Distinct Individuals by Species
 
-Group individuals by species, counting only unique individual IDs per species.
-
-```{r}
+## -----------------------------------------------------------------------------
 # Build a list of individual IDs per species
 individuals_by_species <- list()
 
@@ -139,13 +111,9 @@ knitr::kable(
   caption = "Distinct Individuals by Species",
   align = c("l", "r")
 )
-```
 
-## Analysis 2: Most Frequently Encountered Individuals
 
-Find the individuals with the most encounters, showing their display name and species.
-
-```{r}
+## -----------------------------------------------------------------------------
 # Count encounters per individual and store details
 individual_counts <- list()
 individual_details <- list()
@@ -204,23 +172,10 @@ knitr::kable(
   caption = "Most Frequently Encountered Individuals",
   align = c("l", "l", "r")
 )
-```
 
-## Cleanup
 
-```{r}
+## -----------------------------------------------------------------------------
 # Manual logout (only needed when using Option B from the Setup section above).
 # with_wildbook_client() handles this automatically.
 client$logout()
-```
 
-## Summary
-
-This vignette demonstrates how to:
-
-- Query encounters from a specific date range using `filter_by_date_range()`
-- Extract species names reliably using the `taxonomy` field with fallback
-- Aggregate individual-level statistics from encounter data
-- Present results in formatted tables
-
-The same patterns can be adapted for other time periods, species-specific analyses, or more complex queries using `combine_queries()`.

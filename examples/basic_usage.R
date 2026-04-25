@@ -73,3 +73,19 @@ tryCatch({
 })
 
 cat("Done!\n")
+
+# ── Alternative: with_wildbook_client() ─────────────────────────────────────
+# with_wildbook_client() handles login and logout automatically, even on error.
+
+cat("\n--- Using with_wildbook_client() ---\n")
+
+tryCatch({
+  with_wildbook_client(\(client) {
+    query <- match_all()
+    results <- client$search_encounters(query, size = 5)
+    hits <- results$hits
+    cat(sprintf("Found %d encounters\n", length(hits)))
+  })
+}, wildbook_error = function(e) {
+  cat(sprintf("Wildbook error: %s\n", e$message))
+})
