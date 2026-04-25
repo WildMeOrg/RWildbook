@@ -52,17 +52,9 @@ test_that("WildbookClient strips trailing slash from base_url", {
 # Test Authentication ----
 
 test_that("login with explicit credentials", {
-  skip_if_not(has_httptest2, "httptest2 not available")
-  with_mock_dir("login_success", {
-    client <- WildbookClient$new("http://localhost:8080")
-
-    # Mock the login response
-    httptest2::with_mock_api({
-      # This would normally require a fixture file, but we'll skip for now
-      # as httptest2 setup is complex
-      skip("Mocking infrastructure not fully set up")
-    })
-  })
+  # Full httptest2 fixture-based login test is not yet set up.
+  # See https://github.com/WildMeOrg/RWildbook/issues for tracking.
+  skip("httptest2 fixture infrastructure not yet implemented")
 })
 
 test_that("login fails without credentials or env vars", {
@@ -219,9 +211,8 @@ test_that("complex query serializes correctly", {
 })
 
 # Helper: creates a minimal httr2_response object for mocking req_perform
-make_mock_response <- function(status, body = list(), set_cookie = NULL) {
+make_mock_response <- function(status, body = list()) {
   headers <- list(`content-type` = "application/json")
-  if (!is.null(set_cookie)) headers[["set-cookie"]] <- set_cookie
   structure(
     list(
       status_code = as.integer(status),
@@ -238,7 +229,7 @@ make_mock_response <- function(status, body = list(), set_cookie = NULL) {
 test_that("search_encounters sends correct default URL query params", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   captured_req <- NULL
   local_mocked_bindings(
@@ -258,7 +249,7 @@ test_that("search_encounters sends correct default URL query params", {
 test_that("search_encounters includes sort params when provided", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   captured_req <- NULL
   local_mocked_bindings(
@@ -278,7 +269,7 @@ test_that("search_encounters includes sort params when provided", {
 test_that("search_individuals sends correct default URL query params", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   captured_req <- NULL
   local_mocked_bindings(
@@ -298,7 +289,7 @@ test_that("search_individuals sends correct default URL query params", {
 test_that("search_individuals respects custom from and size params", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   captured_req <- NULL
   local_mocked_bindings(
@@ -324,10 +315,25 @@ test_that("WildbookClient has safe_perform private method", {
   )
 })
 
+test_that("WildbookClient has search_resource private method", {
+  client <- WildbookClient$new("http://localhost:8080")
+  expect_true(
+    is.function(client$.__enclos_env__$private$search_resource)
+  )
+})
+
+test_that("search_encounters rejects invalid sort_order", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  expect_error(
+    client$search_encounters(match_all(), sort_order = "DESC"),
+    "should be one of"
+  )
+})
+
 test_that("401 response produces Authentication error message", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
 
   local_mocked_bindings(
     req_perform = function(req, ...) {
@@ -339,10 +345,28 @@ test_that("401 response produces Authentication error message", {
   expect_error(client$get_current_user(), "Authentication error: Invalid credentials")
 })
 
+test_that("401 response does not clear authenticated state", {
+  # A 401 from an API call means the server rejected the request, but the
+  # local session state is unchanged — the caller must decide whether to
+  # re-authenticate. This mirrors pywildbook behaviour.
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      make_mock_response(401, list(error = "Token expired"))
+    },
+    .package = "httr2"
+  )
+
+  expect_error(client$get_current_user(), "Authentication error")
+  expect_true(client$is_authenticated())
+})
+
 test_that("403 response produces Access forbidden error", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   local_mocked_bindings(
     req_perform = function(req, ...) make_mock_response(403),
@@ -355,7 +379,7 @@ test_that("403 response produces Access forbidden error", {
 test_that("404 response produces Resource not found error", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   local_mocked_bindings(
     req_perform = function(req, ...) make_mock_response(404),
@@ -368,7 +392,7 @@ test_that("404 response produces Resource not found error", {
 test_that("400 response with errors array produces joined error message", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   local_mocked_bindings(
     req_perform = function(req, ...) {
@@ -389,7 +413,7 @@ test_that("400 response with errors array produces joined error message", {
 test_that("400 response without errors array produces Bad request message", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   local_mocked_bindings(
     req_perform = function(req, ...) make_mock_response(400),
@@ -405,7 +429,7 @@ test_that("400 response without errors array produces Bad request message", {
 test_that("200 response returns parsed data", {
   client <- WildbookClient$new("http://localhost:8080")
   client$.__enclos_env__$private$authenticated <- TRUE
-  client$.__enclos_env__$private$session_cookies <- "session=abc"
+
 
   local_mocked_bindings(
     req_perform = function(req, ...) {
@@ -432,4 +456,181 @@ test_that("login returns user data on 200 response", {
   result <- client$login("tester", "pass")
   expect_equal(result$username, "tester")
   expect_true(client$is_authenticated())
+})
+
+# --- L-3: Typed condition hierarchy tests ---
+
+test_that("check_auth raises wildbook_not_authenticated inheriting wildbook_error", {
+  client <- WildbookClient$new("http://localhost:8080")
+  err <- tryCatch(
+    client$get_current_user(),
+    wildbook_error = function(e) e
+  )
+  expect_true(inherits(err, "wildbook_not_authenticated"))
+  expect_true(inherits(err, "wildbook_error"))
+})
+
+test_that("401 raises wildbook_auth_error inheriting wildbook_error", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  local_mocked_bindings(
+    req_perform = function(req, ...) make_mock_response(401, list(error = "Bad creds")),
+    .package = "httr2"
+  )
+  err <- tryCatch(client$get_current_user(), wildbook_error = function(e) e)
+  expect_true(inherits(err, "wildbook_auth_error"))
+  expect_true(inherits(err, "wildbook_error"))
+})
+
+test_that("403 raises wildbook_forbidden inheriting wildbook_error", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  local_mocked_bindings(
+    req_perform = function(req, ...) make_mock_response(403),
+    .package = "httr2"
+  )
+  err <- tryCatch(client$get_current_user(), wildbook_error = function(e) e)
+  expect_true(inherits(err, "wildbook_forbidden"))
+  expect_true(inherits(err, "wildbook_error"))
+})
+
+test_that("404 raises wildbook_not_found inheriting wildbook_error", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  local_mocked_bindings(
+    req_perform = function(req, ...) make_mock_response(404),
+    .package = "httr2"
+  )
+  err <- tryCatch(client$get_encounter("bad-id"), wildbook_error = function(e) e)
+  expect_true(inherits(err, "wildbook_not_found"))
+  expect_true(inherits(err, "wildbook_error"))
+})
+
+test_that("400 raises wildbook_bad_request inheriting wildbook_error", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      make_mock_response(400, list(errors = list(list(message = "bad query"))))
+    },
+    .package = "httr2"
+  )
+  err <- tryCatch(client$search_encounters(match_all()), wildbook_error = function(e) e)
+  expect_true(inherits(err, "wildbook_bad_request"))
+  expect_true(inherits(err, "wildbook_error"))
+})
+
+test_that("500 raises wildbook_api_error inheriting wildbook_error", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  local_mocked_bindings(
+    req_perform = function(req, ...) make_mock_response(500, list(error = "Server error")),
+    .package = "httr2"
+  )
+  err <- tryCatch(client$get_current_user(), wildbook_error = function(e) e)
+  expect_true(inherits(err, "wildbook_api_error"))
+  expect_true(inherits(err, "wildbook_error"))
+})
+
+test_that("wildbook_error base class catches any Wildbook condition", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  local_mocked_bindings(
+    req_perform = function(req, ...) make_mock_response(404),
+    .package = "httr2"
+  )
+  caught <- FALSE
+  tryCatch(
+    client$get_encounter("x"),
+    wildbook_error = function(e) { caught <<- TRUE }
+  )
+  expect_true(caught)
+})
+
+test_that("login success=FALSE raises wildbook_auth_error", {
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      make_mock_response(200, list(success = FALSE, error = "invalid password"))
+    },
+    .package = "httr2"
+  )
+  client <- WildbookClient$new("http://localhost:8080")
+  err <- tryCatch(
+    client$login("user@example.com", "wrongpass"),
+    wildbook_error = function(e) e
+  )
+  expect_true(inherits(err, "wildbook_auth_error"))
+  expect_true(inherits(err, "wildbook_error"))
+  expect_match(conditionMessage(err), "Login failed")
+})
+
+# --- L-2: with_wildbook_client() context manager tests ---
+
+test_that("with_wildbook_client passes WildbookClient to expr", {
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      if (grepl("login", req$url)) {
+        make_mock_response(200, list(success = TRUE, username = "test", id = "u1"))
+      } else {
+        make_mock_response(200, list())
+      }
+    },
+    .package = "httr2"
+  )
+  received_client <- NULL
+  with_wildbook_client(
+    \(client) { received_client <<- client },
+    base_url = "http://localhost:8080",
+    username = "test",
+    password = "pass"
+  )
+  expect_true(inherits(received_client, "WildbookClient"))
+})
+
+test_that("with_wildbook_client logs out after expr completes normally", {
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      if (grepl("login", req$url)) {
+        make_mock_response(200, list(success = TRUE, username = "test", id = "u1"))
+      } else {
+        make_mock_response(200, list())
+      }
+    },
+    .package = "httr2"
+  )
+  captured_client <- NULL
+  with_wildbook_client(
+    \(client) { captured_client <<- client },
+    base_url = "http://localhost:8080",
+    username = "test",
+    password = "pass"
+  )
+  expect_false(captured_client$is_authenticated())
+})
+
+test_that("with_wildbook_client logs out even when expr throws", {
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      if (grepl("login", req$url)) {
+        make_mock_response(200, list(success = TRUE, username = "test", id = "u1"))
+      } else {
+        make_mock_response(200, list())
+      }
+    },
+    .package = "httr2"
+  )
+  captured_client <- NULL
+  expect_error(
+    with_wildbook_client(
+      \(client) {
+        captured_client <<- client
+        stop("deliberate error")
+      },
+      base_url = "http://localhost:8080",
+      username = "test",
+      password = "pass"
+    ),
+    "deliberate error"
+  )
+  expect_false(captured_client$is_authenticated())
 })

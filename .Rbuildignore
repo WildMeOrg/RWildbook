@@ -1,21 +1,33 @@
+# RStudio and IDE files
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^\.claude$
+^CLAUDE\.md$
+^\.gemini$
+^GEMINI\.md$
+
+# Project Metadata and CRAN Documentation
 ^README\.Rmd$
 ^LICENSE\.md$
+^cran-comments\.md$
+^CRAN_READINESS_REVIEW\.md$
+^issue-list$
+
+# Development and CI Configuration
 ^\.github$
-^examples$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
 ^\.covrignore$
 ^codecov\.yml$
-^cran-comments\.md$
-^CRAN_READINESS_REVIEW\.md$
 ^\.lintr$
 ^\.pre-commit-config\.yaml$
-^vignettes/.*\.html$
+
+# Source Code Archives and Examples
 ^archive$
-^\.claude$
-^CLAUDE\.md$
-^GEMINI\.md$
+^examples$
 ^tests/test_queries\.R$
+
+# Temporary and Generated Files
+^vignettes/.*\.html$
+^.*\.Rcheck$

@@ -206,6 +206,25 @@ test_that("filter_by_location with no parameters returns match_all", {
   expect_equal(query, match_all())
 })
 
+test_that("filter_by_location with partial bbox raises error", {
+  expect_error(
+    filter_by_location(min_lat = -5.0, max_lat = 5.0),
+    "Incomplete bounding box"
+  )
+})
+
+test_that("filter_by_location with three bbox params raises error naming the missing one", {
+  err <- tryCatch(
+    filter_by_location(min_lat = -5.0, max_lat = 5.0, min_lon = 35.0),
+    error = function(e) conditionMessage(e)
+  )
+  expect_match(err, "Incomplete bounding box")
+  expect_match(err, "max_lon")
+  expect_match(err, "min_lat")
+  expect_match(err, "max_lat")
+  expect_match(err, "min_lon")
+})
+
 # Test Text Search ----
 
 test_that("text_search simple query", {
@@ -240,12 +259,6 @@ test_that("field_missing creates correct query", {
 test_that("combine_queries with no queries returns match_all", {
   query <- combine_queries()
   expect_equal(query, match_all())
-})
-
-test_that("combine_queries with single query returns that query", {
-  sex_query <- filter_by_sex("female")
-  query <- combine_queries(sex_query)
-  expect_equal(query, sex_query)
 })
 
 test_that("combine_queries with must operator (AND)", {
@@ -285,13 +298,33 @@ test_that("combine_queries with must_not operator (NOT)", {
   expect_equal(length(query$bool$must_not), 2)
 })
 
-test_that("combine_queries with single query returns unchanged regardless of operator", {
+test_that("combine_queries with single must query returns it unwrapped", {
   sex_query <- filter_by_sex("female")
+  query <- combine_queries(sex_query, operator = "must")
+  expect_equal(query, sex_query)
+})
 
-  # Single query should return unchanged, operator is ignored
-  query1 <- combine_queries(sex_query, operator = "must")
-  expect_equal(query1, sex_query)
+test_that("combine_queries with single should query wraps in bool/should", {
+  sex_query <- filter_by_sex("female")
+  query <- combine_queries(sex_query, operator = "should")
+  expect_true("bool" %in% names(query))
+  expect_true("should" %in% names(query$bool))
+  expect_equal(length(query$bool$should), 1)
+  expect_equal(query$bool$should[[1]], sex_query)
+})
 
-  query2 <- combine_queries(sex_query, operator = "should")
-  expect_equal(query2, sex_query)
+test_that("combine_queries with single must_not query wraps in bool/must_not", {
+  sex_query <- filter_by_sex("female")
+  query <- combine_queries(sex_query, operator = "must_not")
+  expect_true("bool" %in% names(query))
+  expect_true("must_not" %in% names(query$bool))
+  expect_equal(length(query$bool$must_not), 1)
+  expect_equal(query$bool$must_not[[1]], sex_query)
+})
+
+test_that("combine_queries rejects invalid operator", {
+  expect_error(
+    combine_queries(filter_by_sex("female"), operator = "foo"),
+    "should be one of"
+  )
 })

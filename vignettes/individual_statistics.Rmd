@@ -24,11 +24,23 @@ This vignette demonstrates how to analyze individual encounter patterns over a s
 
 First, load the package and authenticate. Set your credentials as environment variables:
 
+```{r, eval=FALSE}
+library(RWildbook)
+
+# ── Choose ONE of the two authentication options below ───────────────────────
+
+# Option A (recommended): with_wildbook_client() handles login and logout
+# automatically. Place all analysis code inside the function body.
+with_wildbook_client(\(client) {
+  # ... analysis code using client goes here ...
+})
+```
+
 ```{r}
 library(RWildbook)
 
-# Credentials from environment variables
-# Set these before running: WILDBOOK_URL, WILDBOOK_USERNAME, WILDBOOK_PASSWORD
+# Option B (explicit): manual login/logout — used throughout this vignette
+# for clarity. Each section below references `client` created here.
 client <- WildbookClient$new(base_url = Sys.getenv("WILDBOOK_URL"))
 client$login(
   username = Sys.getenv("WILDBOOK_USERNAME"),
@@ -197,6 +209,8 @@ knitr::kable(
 ## Cleanup
 
 ```{r}
+# Manual logout (only needed when using Option B from the Setup section above).
+# with_wildbook_client() handles this automatically.
 client$logout()
 ```
 

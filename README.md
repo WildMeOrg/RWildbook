@@ -19,7 +19,7 @@ Many thanks to [Simon Bonner](https://github.com/sjbonner) for the conception an
 
 ```r
 # Install dependencies first
-install.packages(c("httr2", "jsonlite", "R6"))
+install.packages(c("httr2", "R6"))
 
 # Install from local directory
 install.packages("path/to/RWildbook", repos = NULL, type = "source")
@@ -42,7 +42,7 @@ library(RWildbook)
 # Create a client instance
 # The base URL can also be set via the WILDBOOK_URL environment variable
 client <- WildbookClient$new(Sys.getenv("WILDBOOK_URL", "http://localhost:8080"))
-```
+
 # Login
 # Credentials can be passed directly or sourced from WILDBOOK_USERNAME and WILDBOOK_PASSWORD environment variables
 client$login()
@@ -314,32 +314,55 @@ encounters_df %>%
 
 ## Error Handling
 
-The client provides clear error messages for different scenarios:
+RWildbook raises typed conditions that can be caught by class name, giving you precise control over error handling.
+
+### Condition classes
+
+| Class | Raised when |
+|-------|-------------|
+| `wildbook_error` | Base class — catches any Wildbook error |
+| `wildbook_auth_error` | Server returns 401, or login returns success=FALSE |
+| `wildbook_not_authenticated` | Method called before `login()` |
+| `wildbook_forbidden` | Server returns 403 |
+| `wildbook_not_found` | Server returns 404 |
+| `wildbook_bad_request` | Server returns 400 |
+| `wildbook_api_error` | Any other HTTP error |
+
+### Catching specific errors
 
 ```r
-# Handle authentication errors
-tryCatch({
-  client$login("user@example.com", "wrong_password")
-}, error = function(e) {
-  cat("Login failed:", e$message, "\n")
-})
+tryCatch(
+  client$get_encounter("some-uuid"),
+  wildbook_not_found  = function(e) cat("Not found:", e$message, "\n"),
+  wildbook_auth_error = function(e) cat("Re-authentication required\n"),
+  wildbook_error      = function(e) cat("Other Wildbook error:", e$message, "\n")
+)
+```
 
-# Handle not found errors
-tryCatch({
-  encounter <- client$get_encounter("invalid-uuid")
-}, error = function(e) {
-  cat("Error:", e$message, "\n")
-})
+### Catching all Wildbook errors
 
-# Always logout in finally block
-tryCatch({
-  # ... do work ...
-}, finally = {
-  if (client$is_authenticated()) {
-    client$logout()
+```r
+tryCatch(
+  client$search_encounters(match_all()),
+  wildbook_error = function(e) {
+    cat("Wildbook error:", e$message, "\n")
   }
+)
+```
+
+### Automatic cleanup with with_wildbook_client()
+
+Use `with_wildbook_client()` instead of a manual `tryCatch/finally` block to guarantee logout on both success and error:
+
+```r
+# Credentials from WILDBOOK_URL, WILDBOOK_USERNAME, WILDBOOK_PASSWORD env vars
+with_wildbook_client(\(client) {
+  results <- client$search_encounters(match_all(), size = 10)
+  results$hits
 })
 ```
+
+The client is always logged out when the function exits, even if an error occurs inside.
 
 ## Examples
 
@@ -385,6 +408,7 @@ vignette("individual_statistics", package = "RWildbook")
 RWildbook/
 ├── R/
 │   ├── client.R              # WildbookClient R6 class
+│   ├── conditions.R          # Typed error condition hierarchy
 │   └── queries.R             # Query helper functions
 ├── man/                      # Roxygen2-generated documentation
 ├── examples/
@@ -440,8 +464,21 @@ R6 class for interacting with Wildbook.
 
 - R >= 4.2.0
 - httr2 >= 1.0.0
-- jsonlite >= 1.8.0
 - R6 >= 2.5.0
+
+## Versioning
+
+RWildbook and pywildbook follow a shared versioning convention to make
+feature equivalence explicit:
+
+- **Major and minor versions are synchronised across both libraries.**
+  `RWildbook 1.2.x` and `pywildbook 1.2.x` expose the same API surface.
+- **Patch versions are independent.** Bug fixes, dependency updates, and
+  other library-specific changes do not require a coordinated release.
+- **Minor bumps are coordinated.** When new features are added they land
+  in both libraries together, then both get the minor bump.
+
+This project follows [Semantic Versioning](https://semver.org/).
 
 ## License
 
