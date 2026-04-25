@@ -466,3 +466,109 @@ test_that("login returns user data on 200 response", {
   expect_equal(result$username, "tester")
   expect_true(client$is_authenticated())
 })
+
+# --- L-3: Typed condition hierarchy tests ---
+
+test_that("check_auth raises wildbook_not_authenticated inheriting wildbook_error", {
+  client <- WildbookClient$new("http://localhost:8080")
+  err <- tryCatch(
+    client$get_current_user(),
+    wildbook_error = function(e) e
+  )
+  expect_true(inherits(err, "wildbook_not_authenticated"))
+  expect_true(inherits(err, "wildbook_error"))
+})
+
+test_that("401 raises wildbook_auth_error inheriting wildbook_error", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  local_mocked_bindings(
+    req_perform = function(req, ...) make_mock_response(401, list(error = "Bad creds")),
+    .package = "httr2"
+  )
+  err <- tryCatch(client$get_current_user(), wildbook_error = function(e) e)
+  expect_true(inherits(err, "wildbook_auth_error"))
+  expect_true(inherits(err, "wildbook_error"))
+})
+
+test_that("403 raises wildbook_forbidden inheriting wildbook_error", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  local_mocked_bindings(
+    req_perform = function(req, ...) make_mock_response(403),
+    .package = "httr2"
+  )
+  err <- tryCatch(client$get_current_user(), wildbook_error = function(e) e)
+  expect_true(inherits(err, "wildbook_forbidden"))
+  expect_true(inherits(err, "wildbook_error"))
+})
+
+test_that("404 raises wildbook_not_found inheriting wildbook_error", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  local_mocked_bindings(
+    req_perform = function(req, ...) make_mock_response(404),
+    .package = "httr2"
+  )
+  err <- tryCatch(client$get_encounter("bad-id"), wildbook_error = function(e) e)
+  expect_true(inherits(err, "wildbook_not_found"))
+  expect_true(inherits(err, "wildbook_error"))
+})
+
+test_that("400 raises wildbook_bad_request inheriting wildbook_error", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      make_mock_response(400, list(errors = list(list(message = "bad query"))))
+    },
+    .package = "httr2"
+  )
+  err <- tryCatch(client$search_encounters(match_all()), wildbook_error = function(e) e)
+  expect_true(inherits(err, "wildbook_bad_request"))
+  expect_true(inherits(err, "wildbook_error"))
+})
+
+test_that("500 raises wildbook_api_error inheriting wildbook_error", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  local_mocked_bindings(
+    req_perform = function(req, ...) make_mock_response(500, list(error = "Server error")),
+    .package = "httr2"
+  )
+  err <- tryCatch(client$get_current_user(), wildbook_error = function(e) e)
+  expect_true(inherits(err, "wildbook_api_error"))
+  expect_true(inherits(err, "wildbook_error"))
+})
+
+test_that("wildbook_error base class catches any Wildbook condition", {
+  client <- WildbookClient$new("http://localhost:8080")
+  client$.__enclos_env__$private$authenticated <- TRUE
+  local_mocked_bindings(
+    req_perform = function(req, ...) make_mock_response(404),
+    .package = "httr2"
+  )
+  caught <- FALSE
+  tryCatch(
+    client$get_encounter("x"),
+    wildbook_error = function(e) { caught <<- TRUE }
+  )
+  expect_true(caught)
+})
+
+test_that("login success=FALSE raises wildbook_auth_error", {
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      make_mock_response(200, list(success = FALSE, error = "invalid password"))
+    },
+    .package = "httr2"
+  )
+  client <- WildbookClient$new("http://localhost:8080")
+  err <- tryCatch(
+    client$login("user@example.com", "wrongpass"),
+    wildbook_error = function(e) e
+  )
+  expect_true(inherits(err, "wildbook_auth_error"))
+  expect_true(inherits(err, "wildbook_error"))
+  expect_match(conditionMessage(err), "Login failed")
+})

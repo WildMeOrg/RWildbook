@@ -107,7 +107,7 @@ WildbookClient <- R6::R6Class(
         message("Logged in successfully as: ", data$username)
         invisible(data)
       } else {
-        stop("Login failed: ", data$error %||% "Unknown error", call. = FALSE)
+        stop(wildbook_auth_error(paste0("Login failed: ", data$error %||% "Unknown error")))
       }
     },
 
@@ -264,7 +264,7 @@ WildbookClient <- R6::R6Class(
     # Check if authenticated, throw error if not
     check_auth = function() {
       if (!private$authenticated) {
-        stop("Not authenticated. Call login() first.", call. = FALSE)
+        stop(wildbook_not_authenticated("Not authenticated. Call login() first."))
       }
     },
 
@@ -307,7 +307,6 @@ WildbookClient <- R6::R6Class(
     handle_response = function(resp) {
       status <- httr2::resp_status(resp)
 
-      # Try to parse JSON response
       data <- tryCatch(
         httr2::resp_body_json(resp),
         error = function(e) list()
@@ -317,11 +316,11 @@ WildbookClient <- R6::R6Class(
         return(data)
       } else if (status == 401) {
         error_msg <- data$error %||% "Authentication failed"
-        stop("Authentication error: ", error_msg, call. = FALSE)
+        stop(wildbook_auth_error(paste0("Authentication error: ", error_msg)))
       } else if (status == 403) {
-        stop("Access forbidden", call. = FALSE)
+        stop(wildbook_forbidden("Access forbidden"))
       } else if (status == 404) {
-        stop("Resource not found", call. = FALSE)
+        stop(wildbook_not_found("Resource not found"))
       } else if (status == 400) {
         errors <- data$errors
         if (!is.null(errors) && length(errors) > 0) {
@@ -330,10 +329,10 @@ WildbookClient <- R6::R6Class(
         } else {
           error_msg <- "Bad request"
         }
-        stop("Bad request: ", error_msg, call. = FALSE)
+        stop(wildbook_bad_request(paste0("Bad request: ", error_msg)))
       } else {
         error_msg <- data$error %||% paste("HTTP", status)
-        stop("API error: ", error_msg, call. = FALSE)
+        stop(wildbook_api_error(paste0("API error: ", error_msg)))
       }
     }
   )
