@@ -14,6 +14,9 @@
 # Output files from R CMD check
 /*.Rcheck/
 
+# Test diagnostics
+tests/testthat/_problems/
+
 # RStudio files
 .Rproj.user/
 
@@ -50,6 +53,7 @@ TRANSITION_PLAN.md
 CLAUDE.md
 .gemini/
 GEMINI.md
+.positai
 issue-list
 docs/
 

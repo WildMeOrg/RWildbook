@@ -5,6 +5,7 @@
 ^CLAUDE\.md$
 ^\.gemini$
 ^GEMINI\.md$
+^\.positai$
 
 # Project Metadata and CRAN Documentation
 ^README\.Rmd$
@@ -31,3 +32,4 @@
 # Temporary and Generated Files
 ^vignettes/.*\.html$
 ^.*\.Rcheck$
+^tests/testthat/_problems$
