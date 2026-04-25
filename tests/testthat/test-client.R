@@ -572,3 +572,74 @@ test_that("login success=FALSE raises wildbook_auth_error", {
   expect_true(inherits(err, "wildbook_error"))
   expect_match(conditionMessage(err), "Login failed")
 })
+
+# --- L-2: with_wildbook_client() context manager tests ---
+
+test_that("with_wildbook_client passes WildbookClient to expr", {
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      if (grepl("login", req$url)) {
+        make_mock_response(200, list(success = TRUE, username = "test", id = "u1"))
+      } else {
+        make_mock_response(200, list())
+      }
+    },
+    .package = "httr2"
+  )
+  received_client <- NULL
+  with_wildbook_client(
+    \(client) { received_client <<- client },
+    base_url = "http://localhost:8080",
+    username = "test",
+    password = "pass"
+  )
+  expect_true(inherits(received_client, "WildbookClient"))
+})
+
+test_that("with_wildbook_client logs out after expr completes normally", {
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      if (grepl("login", req$url)) {
+        make_mock_response(200, list(success = TRUE, username = "test", id = "u1"))
+      } else {
+        make_mock_response(200, list())
+      }
+    },
+    .package = "httr2"
+  )
+  captured_client <- NULL
+  with_wildbook_client(
+    \(client) { captured_client <<- client },
+    base_url = "http://localhost:8080",
+    username = "test",
+    password = "pass"
+  )
+  expect_false(captured_client$is_authenticated())
+})
+
+test_that("with_wildbook_client logs out even when expr throws", {
+  local_mocked_bindings(
+    req_perform = function(req, ...) {
+      if (grepl("login", req$url)) {
+        make_mock_response(200, list(success = TRUE, username = "test", id = "u1"))
+      } else {
+        make_mock_response(200, list())
+      }
+    },
+    .package = "httr2"
+  )
+  captured_client <- NULL
+  expect_error(
+    with_wildbook_client(
+      \(client) {
+        captured_client <<- client
+        stop("deliberate error")
+      },
+      base_url = "http://localhost:8080",
+      username = "test",
+      password = "pass"
+    ),
+    "deliberate error"
+  )
+  expect_false(captured_client$is_authenticated())
+})

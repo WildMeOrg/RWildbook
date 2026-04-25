@@ -342,3 +342,44 @@ WildbookClient <- R6::R6Class(
 `%||%` <- function(x, y) {
   if (is.null(x)) y else x
 }
+
+#' Execute code with an authenticated Wildbook client
+#'
+#' @description
+#' Creates a \code{WildbookClient}, logs in, evaluates \code{expr} with the
+#' client, and guarantees logout on exit — whether \code{expr} succeeds or
+#' errors. This is the R equivalent of Python's \code{with} statement.
+#'
+#' @param expr A function that accepts a single argument: the authenticated
+#'   \code{WildbookClient} instance.
+#' @param base_url Base URL of the Wildbook instance. Falls back to the
+#'   \code{WILDBOOK_URL} environment variable if \code{NULL}.
+#' @param username Username or email. Falls back to \code{WILDBOOK_USERNAME}
+#'   if \code{NULL}.
+#' @param password Password. Falls back to \code{WILDBOOK_PASSWORD} if
+#'   \code{NULL}.
+#' @return The return value of \code{expr}.
+#' @export
+#' @examples
+#' \dontrun{
+#' # Credentials from WILDBOOK_URL, WILDBOOK_USERNAME, WILDBOOK_PASSWORD
+#' with_wildbook_client(\(client) {
+#'   results <- client$search_encounters(match_all(), size = 50)
+#'   results$hits
+#' })
+#'
+#' # Or pass credentials explicitly
+#' with_wildbook_client(
+#'   \(client) client$search_encounters(match_all()),
+#'   base_url  = "http://localhost:8080",
+#'   username  = "user@example.com",
+#'   password  = "secret"
+#' )
+#' }
+with_wildbook_client <- function(expr, base_url = NULL,
+                                  username = NULL, password = NULL) {
+  client <- WildbookClient$new(base_url)
+  on.exit(if (client$is_authenticated()) client$logout(), add = TRUE)
+  client$login(username, password)
+  expr(client)
+}
