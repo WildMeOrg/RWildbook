@@ -6,23 +6,38 @@ For a Python client with aligned functionality see [pywildbook](https://github.c
 Many thanks to [Simon Bonner](https://github.com/sjbonner) for the conception and development of this project for the Wildbook v1 API. 
 
 
-## Features
-
-- 🔐 Session-based authentication with automatic cookie management
-- 🔍 Powerful search capabilities using OpenSearch/Elasticsearch queries
-- 🛠️ Helper functions for common query patterns
-- 🎯 Simple, intuitive API similar to tidyverse conventions
-
 ## Installation
 
-### From source
+### From R console
 
 ```r
 # Install dependencies first
 install.packages(c("httr2", "R6"))
 
 # Install from local directory
-install.packages("path/to/RWildbook", repos = NULL, type = "source")
+install.packages(".", repos = NULL, type = "source")
+```
+
+### From terminal (Command line)
+
+This is the recommended approach for a clean build that includes vignettes:
+
+```bash
+# 1. Build the source package (tarball)
+R CMD build .
+
+# 2. Install the resulting tarball
+R CMD INSTALL RWildbook_1.0.0.tar.gz
+```
+
+**Note on Vignettes:** Building the vignettes requires **Pandoc** to be installed on your system.
+- On **macOS**, you can install it via Homebrew: `brew install pandoc`
+- On **Windows/Linux**, see [Pandoc installation guide](https://pandoc.org/installing.html).
+
+If you do not have Pandoc installed, you can build and install without vignettes:
+```bash
+R CMD build . --no-build-vignettes
+R CMD INSTALL RWildbook_1.0.0.tar.gz
 ```
 
 ### Load the package
