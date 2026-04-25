@@ -53,9 +53,10 @@ Users requiring the legacy interface can install from the archive branch.
 
 ## Authors
 
-* Wild Me (Maintainer, Author)
-* Simon Bonner (Contributor - original package author)
-* Xinxin Huang (Contributor - original package author)
+* Kirk Larsen  (Maintainer, Author)
+* Simon Bonner (Author - original package author)
+* Xinxin Huang (Author - original package author)
+* Conservation X Labs (Copyright Holder)
 
 ## Acknowledgments
 
