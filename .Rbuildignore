@@ -5,6 +5,7 @@
 ^CLAUDE\.md$
 ^\.gemini$
 ^GEMINI\.md$
+^\.positai$
 
 # Project Metadata and CRAN Documentation
 ^README\.Rmd$
