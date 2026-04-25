@@ -52,17 +52,9 @@ test_that("WildbookClient strips trailing slash from base_url", {
 # Test Authentication ----
 
 test_that("login with explicit credentials", {
-  skip_if_not(has_httptest2, "httptest2 not available")
-  with_mock_dir("login_success", {
-    client <- WildbookClient$new("http://localhost:8080")
-
-    # Mock the login response
-    httptest2::with_mock_api({
-      # This would normally require a fixture file, but we'll skip for now
-      # as httptest2 setup is complex
-      skip("Mocking infrastructure not fully set up")
-    })
-  })
+  # Full httptest2 fixture-based login test is not yet set up.
+  # See https://github.com/WildMeOrg/RWildbook/issues for tracking.
+  skip("httptest2 fixture infrastructure not yet implemented")
 })
 
 test_that("login fails without credentials or env vars", {
@@ -219,9 +211,8 @@ test_that("complex query serializes correctly", {
 })
 
 # Helper: creates a minimal httr2_response object for mocking req_perform
-make_mock_response <- function(status, body = list(), set_cookie = NULL) {
+make_mock_response <- function(status, body = list()) {
   headers <- list(`content-type` = "application/json")
-  if (!is.null(set_cookie)) headers[["set-cookie"]] <- set_cookie
   structure(
     list(
       status_code = as.integer(status),

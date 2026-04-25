@@ -27,6 +27,7 @@ Suggests:
     testthat (>= 3.2.1),
     httptest2,
     withr,
+    jsonlite,
     knitr,
     rmarkdown
 VignetteBuilder: knitr

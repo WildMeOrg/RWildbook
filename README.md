@@ -19,7 +19,7 @@ Many thanks to [Simon Bonner](https://github.com/sjbonner) for the conception an
 
 ```r
 # Install dependencies first
-install.packages(c("httr2", "jsonlite", "R6"))
+install.packages(c("httr2", "R6"))
 
 # Install from local directory
 install.packages("path/to/RWildbook", repos = NULL, type = "source")
@@ -42,7 +42,7 @@ library(RWildbook)
 # Create a client instance
 # The base URL can also be set via the WILDBOOK_URL environment variable
 client <- WildbookClient$new(Sys.getenv("WILDBOOK_URL", "http://localhost:8080"))
-```
+
 # Login
 # Credentials can be passed directly or sourced from WILDBOOK_USERNAME and WILDBOOK_PASSWORD environment variables
 client$login()
@@ -408,6 +408,7 @@ vignette("individual_statistics", package = "RWildbook")
 RWildbook/
 ├── R/
 │   ├── client.R              # WildbookClient R6 class
+│   ├── conditions.R          # Typed error condition hierarchy
 │   └── queries.R             # Query helper functions
 ├── man/                      # Roxygen2-generated documentation
 ├── examples/
@@ -463,7 +464,6 @@ R6 class for interacting with Wildbook.
 
 - R >= 4.2.0
 - httr2 >= 1.0.0
-- jsonlite >= 1.8.0
 - R6 >= 2.5.0
 
 ## Versioning
