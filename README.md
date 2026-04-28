@@ -417,6 +417,9 @@ vignette("individual_statistics", package = "RWildbook")
 
 ## Development
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contributor workflow, coding
+conventions, tests, and pull request guidance.
+
 ### Package Structure
 
 ```
